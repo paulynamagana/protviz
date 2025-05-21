@@ -6,7 +6,7 @@ url: "https://paulynamagana.github.io" # The base hostname & protocol for your s
 
 # Build settings
 markdown: kramdown
-theme: just-the-docs # Use the just-the-docs theme (supported by github-pages gem)
+remote_theme: just-the-docs/just-the-docs # Use the remote theme explicitly
 
 # Enable or disable the site search
 search_enabled: true
@@ -19,13 +19,9 @@ aux_links:
 # Footer content
 footer_content: "Copyright &copy; {{ site.time | date: '%Y' }} {{ site.title }}. All rights reserved."
 
-# Plugins are typically managed by the 'github-pages' gem, so no need to list them here
-# unless you have custom ones not included in github-pages.
-# For just-the-docs, the necessary plugins like jekyll-feed, jekyll-seo-tag,
-# and jekyll-last-modified-at are usually handled.
-# If you find a specific feature missing, you might need to add a plugin here,
-# but start without them for maximum compatibility.
-# plugins:
-#   - jekyll-feed
-#   - jekyll-seo-tag
-#   - jekyll-last-modified-at
+# Plugins required for remote themes and other features
+plugins:
+  - jekyll-feed
+  - jekyll-seo-tag
+  - jekyll-remote-theme # This plugin is crucial for remote themes
+  - jekyll-last-modified-at # Recommended for just-the-docs

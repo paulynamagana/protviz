@@ -6,33 +6,34 @@ on:
       - main # Set a branch to deploy from
 
 jobs:
-  build:
+  build-and-deploy:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Pages
-        uses: actions/configure-pages@v5
-
-      - name: Build with Jekyll
-        uses: actions/jekyll-build-pages@v1 # This is the action causing the error
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
         with:
-          source: ./ # Or the directory where your Jekyll site is (e.g., 'docs')
-          destination: ./_site # Default output directory
+          ruby-version: '3.x' # Use a recent Ruby version
+          bundler-cache: true # speeds up subsequent runs
 
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: ./_site
+      - name: Install Jekyll and dependencies
+        run: |
+          # Install gems from Gemfile, including jekyll-remote-theme
+          bundle install
 
-  deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
-    needs: build
-    steps:
+      - name: Build Jekyll site
+        # This command will use the gems installed by bundle install,
+        # and jekyll-remote-theme will fetch 'just-the-docs'.
+        run: bundle exec jekyll build --destination ./_site
+
       - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+        uses: peaceiris/actions-gh-pages@v4 # This action handles deployment to gh-pages branch
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./_site # Jekyll's default output directory
+          # Important for project sites:
+          # This tells the action to push the content into the 'protviz' subdirectory
+          # on the gh-pages branch, matching your URL structure.
+          destination_dir: protviz
