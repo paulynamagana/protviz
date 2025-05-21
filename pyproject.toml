@@ -1,0 +1,81 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "protviz"
+version = "0.0.1"
+description = "A python package to visualise protein data and add custom annotations"
+readme = "README.md"
+requires-python = ">=3.9"
+license = {file = "LICENSE"}
+authors = [
+    {name = "Paulyna Magaña", email = "paulynamagana@gmail.com"},
+]
+keywords = ["python", "protein", "visualization"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Bio-Informatics",
+    "Operating System :: OS Independent",
+]
+
+dependencies = [
+    "numpy>=1.20",
+    "matplotlib>=3.4",
+    "requests>=2.20",
+    "gemmi==0.7.1"
+]
+
+
+[project.urls]
+Homepage = "https://github.com/paulynamagana/protviz"
+Repository = "https://github.com/paulynamagana/protviz"
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "black",
+    "ruff",
+    "pytest-mock",
+    "pre-commit"
+]
+
+# Ruff configuration
+[tool.ruff.lint]
+select = ["E", "F", "W", "I"]
+ignore = ["E501", "E701"]
+
+[tool.ruff]
+target-version = "py39"
+src = ["src", "tests", "examples"]
+
+# Exclude files or directories.
+exclude = [
+    ".bzr",
+    ".direnv",
+    ".eggs",
+    ".git",
+    ".hg",
+    ".mypy_cache",
+    ".nox",
+    ".pants.d",
+    ".pytype",
+    ".ruff_cache",
+    ".svn",
+    ".tox",
+    ".venv",
+    "__pypackages__",
+    "_build",
+    "buck-out",
+    "build",
+    "dist",
+    "node_modules",
+    "venv"
+]
