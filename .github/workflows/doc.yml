@@ -22,14 +22,18 @@ jobs:
           pip install sphinx sphinx_rtd_theme # Add any other Sphinx extensions you use
 
       - name: Build Sphinx documentation 📚
-        run: sphinx-build -b html source build
+        # Navigate to the docs directory before building
+        run: |
+          cd docs
+          sphinx-build -b html source build
 
       - name: Deploy to GitHub Pages 🚀
         uses: peaceiris/actions-gh-pages@v4 # Use the latest version
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          # Publish to the 'protviz' subdirectory
-          publish_dir: build/html
+          # The publish_dir now points to 'docs/build/html'
+          publish_dir: docs/build/html
+          # The destination_dir remains 'protviz' for the project site URL
           destination_dir: protviz
           # If you want to keep the history of gh-pages branch, set keep_history: true
           # keep_history: true
