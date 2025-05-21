@@ -1,9 +1,6 @@
 title: Protviz
 description: A starter template for a Jeykll site using the Just the Docs theme!
-remote_theme: just-the-docs
+theme: just-the-docs
 
-url: https://paulynamagana.github.io
+url: https://paulynamagana.github.io/protviz/
 
-
-aux_links:
-  Template Repository: https://paulynamagana.github.io/protviz/
