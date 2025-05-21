@@ -1,9 +1,107 @@
 {"0": {
+    "doc": "Default layout child page",
+    "title": "Default layout child page",
+    "content": "This is a child page that uses the default layout as compared to its parent page (which uses the minimal layout). ",
+    "url": "/protviz/docs/layout/minimal/default-child.html",
+    
+    "relUrl": "/docs/layout/minimal/default-child.html"
+  },"1": {
     "doc": "Home",
     "title": "Home",
-    "content": "This is a bare-minimum template to create a Jekyll site that uses the Just the Docs theme. You can easily set the created site to be published on GitHub Pages – the README file explains how to do that, along with other details. If Jekyll is installed on your computer, you can also build and preview the created site locally. This lets you test changes before committing them, and avoids waiting for GitHub Pages.1 And you will be able to deploy your local build to a different platform than GitHub Pages. More specifically, the created site: . | uses a gem-based approach, i.e. uses a Gemfile and loads the just-the-docs gem | uses the GitHub Pages / Actions workflow to build and publish the site on GitHub Pages | . Other than that, you’re free to customize sites that you create with this template, however you like. You can easily change the versions of just-the-docs and Jekyll it uses, as well as adding further plugins. Browse our documentation to learn more about how to use this theme. To get started with creating a site, simply: . | click “use this template” to create a GitHub repository | go to Settings &gt; Pages &gt; Build and deployment &gt; Source, and select GitHub Actions | . If you want to maintain your docs in the docs directory of an existing project repo, see Hosting your docs from an existing project repo in the template README. | It can take up to 10 minutes for changes to your site to publish after you push the changes to GitHub. &#8617; . | . ",
-    "url": "/",
+    "content": "ProtViz is a Python package designed to simplify the retrieval and visualization of protein annotations and structural information. It provides a powerful and intuitive way to fetch data from multiple bioinformatics databases and plot this information along a protein sequence using a flexible track-based system. License . ProtViz is distributed by an MIT license . ",
+    "url": "/protviz/",
     
     "relUrl": "/"
+  },"2": {
+    "doc": "Layout",
+    "title": "Layout",
+    "content": "You specify the layout for a page in its front matter. Just the Docs has a default layout with a sidebar, used for almost all pages in the theme docs, and a minimal layout that omits the sidebar. ",
+    "url": "/protviz/docs/layout/layout.html",
+    
+    "relUrl": "/docs/layout/layout.html"
+  },"3": {
+    "doc": "Layout",
+    "title": "The layout concept",
+    "content": "See the Jekyll docs page about layouts for an explanation of the general idea of layouts and how to specify them. You can use Jekyll’s front matter defaults to specify the same layout for many pages. ",
+    "url": "/protviz/docs/layout/layout.html#the-layout-concept",
+    
+    "relUrl": "/docs/layout/layout.html#the-layout-concept"
+  },"4": {
+    "doc": "Layout",
+    "title": "The default layout",
+    "content": "This page uses the default layout. This site configures layout: default as a front matter default value for all pages in the docs directory. The default layout of Just the Docs is a responsive layout: on medium and larger width displays, it displays a sidebar, including a navigation panel; on smaller width displays, the sidebar is automatically hidden under a button. All pages except top-level pages automatically have a list of so-called breadcrumbs: links to their parent pages and any higher-level ancestors. They show the breadcrumbs above the main content of the page. Each page that has child pages generally has a list of links to those pages (you can suppress it by has_toc: false in the front matter). It shows the list as a table of contents below the main content. ",
+    "url": "/protviz/docs/layout/layout.html#the-default-layout",
+    
+    "relUrl": "/docs/layout/layout.html#the-default-layout"
+  },"5": {
+    "doc": "Layout",
+    "title": "The minimal layout",
+    "content": "A child and grandchild page of this page use the minimal layout. This differs from the default layout by omitting the sidebar—and thereby also the navigation panel. To navigate between pages with the minimal layout, you can use the breadcrumbs and the tables of contents. ",
+    "url": "/protviz/docs/layout/layout.html#the-minimal-layout",
+    
+    "relUrl": "/docs/layout/layout.html#the-minimal-layout"
+  },"6": {
+    "doc": "Layout",
+    "title": "Selectively hiding or showing the sidebar",
+    "content": "Jekyll’s front matter defaults can be used to apply the minimal layout for many pages. But there are also other variables that can control the page layout. In _config.yml, you can set nav_enabled: false to disable the sidebar navigation panel across the entire site. This can then be selectively enabled on a page-by-page basis by assigning the nav_enabled: true page front matter variable. For instance, this could be used to enable sidebar navigation on a home page while all other pages have sidebar navigation disabled. --- layout: default title: Home nav_enabled: true --- . ",
+    "url": "/protviz/docs/layout/layout.html#selectively-hiding-or-showing-the-sidebar",
+    
+    "relUrl": "/docs/layout/layout.html#selectively-hiding-or-showing-the-sidebar"
+  },"7": {
+    "doc": "Layout",
+    "title": "Other layouts",
+    "content": "Just the Docs has further layouts: about, home, page, and post. Currently, they are all based on the default layout. See the Jekyll docs about inheritance for how to customize them. ",
+    "url": "/protviz/docs/layout/layout.html#other-layouts",
+    
+    "relUrl": "/docs/layout/layout.html#other-layouts"
+  },"8": {
+    "doc": "Minimal layout child page",
+    "title": "Minimal layout child page",
+    "content": "This is a child page that uses the same minimal layout as its parent page. ",
+    "url": "/protviz/docs/layout/minimal/minimal-child.html",
+    
+    "relUrl": "/docs/layout/minimal/minimal-child.html"
+  },"9": {
+    "doc": "Minimal layout test",
+    "title": "Minimal Layout Test Page",
+    "content": "Return to main website. This page demonstrates the packaged minimal layout, which does not render the sidebar or header. It can be used for standalone pages. It is also an example of using the new modular site components to define custom layouts; see “Custom layouts and includes” in the customization docs for more information. ",
+    "url": "/protviz/docs/minimal-test.html#minimal-layout-test-page",
+    
+    "relUrl": "/docs/minimal-test.html#minimal-layout-test-page"
+  },"10": {
+    "doc": "Minimal layout test",
+    "title": "Minimal layout test",
+    "content": " ",
+    "url": "/protviz/docs/minimal-test.html",
+    
+    "relUrl": "/docs/minimal-test.html"
+  },"11": {
+    "doc": "A minimal layout page",
+    "title": "A minimal layout page",
+    "content": "This page illustrates the built-in layout minimal. One of its child pages also uses the minimal layout; the other child pages uses the default layout. ",
+    "url": "/protviz/docs/layout/minimal/minimal.html",
+    
+    "relUrl": "/docs/layout/minimal/minimal.html"
+  },"12": {
+    "doc": "Search",
+    "title": "Search",
+    "content": " ",
+    "url": "/protviz/docs/search.html",
+    
+    "relUrl": "/docs/search.html"
+  },"13": {
+    "doc": "Search",
+    "title": "Table of contents",
+    "content": ". | Enable search in configuration | . Just the Docs uses lunr.js to add a client-side search interface powered by a JSON index that Jekyll generates. All search results are shown in an auto-complete style interface (there is no search results page). By default, all generated HTML pages are indexed using the following data points: . | Page title | Page content | Page URL | . ",
+    "url": "/protviz/docs/search.html#table-of-contents",
+    
+    "relUrl": "/docs/search.html#table-of-contents"
+  },"14": {
+    "doc": "Search",
+    "title": "Enable search in configuration",
+    "content": "In your site’s _config.yml, enable search: . Quick Start Code Example This example demonstrates a basic ProtViz workflow, fetching data from PDBe and UniProt and creating a simple plot. from protviz import plot_protein_tracks from protviz.data_retrieval import PDBeClient, get_protein_sequence_length from protviz.tracks import AxisTrack, PDBTrack def main(): uniprot_id = \"P25494\" # Example: Human p53 protein pdbe_client = PDBeClient() try: seq_length = get_protein_sequence_length(uniprot_id) print(f\"Sequence length: {seq_length}\") pdb_coverage = pdbe_client.get_pdb_coverage(uniprot_id) print(f\"PDB Coverage entries: {len(pdb_coverage)}\") # Create tracks axis_track = AxisTrack(sequence_length=seq_length, label=\"Sequence\") pdb_track = PDBTrack(pdb_data=pdb_coverage, label=\"PDB Coverage\") # Plot tracks plot_protein_tracks( protein_id=uniprot_id, sequence_length=seq_length, tracks=[axis_track, pdb_track], figure_width=8 ) except Exception as e: print(f\"An error occurred: {e}\") if __name__ == \"__main__\": main() . ",
+    "url": "/protviz/docs/search.html#enable-search-in-configuration",
+    
+    "relUrl": "/docs/search.html#enable-search-in-configuration"
   }
 }
