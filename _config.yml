@@ -16,10 +16,6 @@ defaults:
     values:
       layout: "default"
 
-
-# Enable or disable the site search
-search_enabled: true
-
 # Aux links for the upper right navigation (customize as needed)
 aux_links:
   "Protviz on GitHub":

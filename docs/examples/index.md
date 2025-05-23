@@ -27,4 +27,3 @@ Beyond visualising single data types, the real power of Protviz comes from its a
 {: .fs-6 .fw-300 }
 
 This section provides practical examples of how to combine different data retrieval clients and track types to create richer visualisations. Each example will focus on a specific combination of data, offering a complete script that you can adapt for your own proteins of interest.
-

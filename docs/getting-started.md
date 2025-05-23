@@ -1,7 +1,7 @@
 ---
 layout: default
 title: Getting Started
-nav_order: 3 
+nav_order: 3
 description: "A step-by-step guide to creating your first protein annotation plot with Protviz."
 ---
 
@@ -59,7 +59,7 @@ This example demonstrates a basic ProtViz workflow, fetching data from PDBe and 
         # 2. Choose a UniProt ID
         uniprot_id = "P25494"  # Example: Human p53 protein
         # 3. Initialise Data Retrieval Clients
-        pdbe_client = PDBeClient() 
+        pdbe_client = PDBeClient()
 
         try:
             # 4. Fetch Protein Information

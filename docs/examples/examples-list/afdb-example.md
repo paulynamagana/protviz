@@ -7,6 +7,24 @@ description: "Explore advanced Protviz capabilities by combining multiple data s
 ---
 
 # Visualising AlphaFold Data (pLDDT and AlphaMissense)
+
+<button class="btn js-toggle-dark-mode">Dark mode</button>
+
+<script>
+const toggleDarkMode = document.querySelector('.js-toggle-dark-mode');
+
+jtd.addEvent(toggleDarkMode, 'click', function(){
+  if (jtd.getTheme() === 'dark') {
+    jtd.setTheme('light');
+    toggleDarkMode.textContent = 'Dark mode';
+  } else {
+    jtd.setTheme('dark');
+    toggleDarkMode.textContent = 'Light mode';
+  }
+});
+</script>
+---
+
 Here, we demonstrate how to fetch and display both pLDDT confidence scores and AlphaMissense pathogenicity predictions from the AlphaFold Database.
 {: .fs-6 .fw-300 }
 
@@ -21,7 +39,7 @@ from protviz.data_retrieval import AFDBClient, get_protein_sequence_length
 from protviz.tracks import AlphaFoldTrack, AxisTrack
 
 def main():
-    uniprot_id = "Q9BYF1" # A human protein known to have AlphaMissense data
+    uniprot_id = "Q12888" # A human protein known to have AlphaMissense data
     afdb_client = AFDBClient()
 
     try:
@@ -47,10 +65,10 @@ def main():
         alphafold_multidata_track = AlphaFoldTrack(
             afdb_data=alphafold_data,
             plotting_options=["plddt", "alphamissense"], # Specify both to be plotted
-            main_label="AlphaFold Insights", # Overall label for this group of AF tracks
-            plddt_label="pLDDT Confidence",
-            alphamissense_label="AlphaMissense Pathogenicity (Avg.)",
-            sub_track_height=0.3, # Height for each row (pLDDT, AlphaMissense)
+            main_label="", # Overall label for this group of AF tracks
+            plddt_label="pLDDT",
+            alphamissense_label="AlphaMissense (Avg)",
+            sub_track_height=0.1, # Height for each row (pLDDT, AlphaMissense)
             sub_track_spacing=0.05 # Space between the pLDDT and AlphaMissense rows
         )
 
@@ -59,7 +77,7 @@ def main():
             protein_id=uniprot_id,
             sequence_length=seq_length,
             tracks=[axis_trk, alphafold_multidata_track],
-            figure_width=12,
+            figure_width=10,
             save_option=True
         )
         print(f"AlphaFold example plot saved as {uniprot_id}_plot.png")
@@ -71,5 +89,8 @@ def main():
 
 if __name__ == "__main__":
     main()
-
 ```
+
+The previous example will generate a plot like this one:
+
+<img src="../../../assets/images/afdb_Q12888_plot.png" alt="AFDB Plot" width="200%">

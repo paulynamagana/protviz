@@ -13,7 +13,7 @@
   {%- if include.all == true or node.nav_exclude != true -%}
 
   {%- if include.ancestors contains node.title -%}
-  
+
     <li class="nav-list-item">
       <a href="{{ node.url | relative_url }}" class="nav-list-link"> ∞ </a>
     </li>
@@ -26,7 +26,7 @@
     {%- endcapture -%}
 
   {%- else -%}
-  
+
     {%- include components/nav/children.html node=node ancestors=include.ancestors all=include.all -%}
 
     <li class="nav-list-item">
@@ -44,9 +44,9 @@
         {%- include components/nav/links.html pages=nav_children ancestors=nav_ancestors all=include.all -%}
       {%- endif -%}
     </li>
-  
+
   {%- endif -%}
-  
+
   {%- endif -%}
   {%- endfor -%}
 </ul>

@@ -4,7 +4,7 @@
   Results in: page-dependent CSS rules for inclusion in a style element,
     which needs to be disabled when JS is enabled.
   Includes: components/site_nav.html.
-  Overwrites: 
+  Overwrites:
     activation_no_nav_link, nav_list_link, site_nav,
     nav_list, nav_list_end, nav_list_item, nav_category_list,
     nav_list_link_prefix, nav_splits, nav_split, nav_levels,
@@ -70,7 +70,7 @@
   {%- comment -%}
     The pattern of occurrences of list and list-item tags in the site_nav string
     is included in the language defined by the following context-free grammar:
-    
+
       site_nav = PAGES? EXTERNALS? COLLECTION*
 
       PAGES = nav_list (nav_list_item PAGES?)+ nav_list_end
@@ -78,41 +78,41 @@
       EXTERNALS = nav_list nav_list_item+ nav_list_end
 
       COLLECTION = nav_list (nav_list_item PAGES?)* nav_list_end
-                 | nav_category_list 
+                 | nav_category_list
                      nav_list_item nav_list (nav_list_item PAGES?)* nav_list_end
                    nav_list_end
-    
+
     To determine the path in the site_nav to the nav_list_link for the current page,
     the prefix of nav_list_link in site_nav is split at each nav_list_item to give
     an array of nav_splits.
-    
+
     In site_nav, occurrences of nav_list must be separated by at least one
     nav_list_item or nav_list_end. Moreover, when a nav_list_end is followed by a
     nav_list without an intervening nav_list_item, that nav_list must start either
     a list of external links or a collection. And when a nav_list is followed by a
     nav_list_end without an intervening nav_list_item, they form an empty collection.
-    
+
     nav_levels is the path determined by the previously inspected nav_splits.
-    How many times nav_list and nav_list_end occur in the current nav_split 
+    How many times nav_list and nav_list_end occur in the current nav_split
     determines how to update the path.
-    
+
     A nav_split can contain any number of empty non-foldable collections.
     The path element produced by the outer nav_list of a foldable collection is
     irrelevant; it is set to zero and subsequently removed.
-      
+
     The number of occurrences of a string in a nav_split is computed by removing
     them all, then dividing the resulting size difference by the length of the string.
-    
+
     Case analysis on (nav_list_count, nav_list_end_count):
-    
+
     - when (0, 0), the nav_split was between two nav_list_items at the same level;
-    
+
     - when (0, N+1), all the nav_list_ends in the nav_split are in PAGES or in one
       COLLECTION;
-      
+
     - when (M+1, 0), M must be 0 (because two nav_lists in the same nav_split must
       be separated by at least one nav_list_end);
-      
+
     - when (M+1, N+1), the nav_split must contain either:
       - the end of PAGES followed by the start of EXTERNALS, or
       - the end of PAGES followed by the start of a COLLECTION, or
@@ -131,12 +131,12 @@
 
     {%- assign nav_list_less = nav_split | remove: nav_list -%}
     {%- assign nav_list_count =
-          nav_split.size | minus: nav_list_less.size | 
+          nav_split.size | minus: nav_list_less.size |
           divided_by: nav_list.size -%}
 
     {%- assign nav_list_end_less = nav_split | remove: nav_list_end -%}
     {%- assign nav_list_end_count =
-          nav_split.size | minus: nav_list_end_less.size | 
+          nav_split.size | minus: nav_list_end_less.size |
           divided_by: nav_list_end.size -%}
 
     {%- if nav_list_count == 0 and nav_list_end_count == 0 -%}
@@ -196,17 +196,17 @@
     - an optional ul.nav-list with li.nav-list-items for non-collection top-level pages
     - an optional ul.nav-list with li.nav-list-item.externals
     - any number of just-the-docs.collections
-    
+
     A non-foldable collection is:
     - a div.nav-category with the collection name, followed by:
     - a ul.nav-list with li.nav-list-items for its top-level pages
-    
+
     A foldable collection is:
     - a ul.nav-list.nav-category-list with a single li.nav-list-item containing:
       - an optional button with the expander svg
       - a div.nav-category with the collection name
       - a ul.nav-list with li.nav-list-items for its top-level pages
-    
+
     The generated CSS uses:
     - activation_collection_prefix, to select the site-nav > ul.nav-list for the page
     - activation_other_collection_prefix, to select all the other site-nav > ul.nav-lists
@@ -282,7 +282,7 @@
   {%- comment -%}
     The following rules unfold all collections, and display the links to any children
     of the current page.
-    
+
     To avoid dependence on the SCSS variable nav-list-expander-right, the direction
     of the rotation of the expander icon is fixed, and corresponds to the appearance
     when nav-list-expander-right is true. This results in a minor visual difference
@@ -295,7 +295,7 @@
     {% endif -%}
     {{ activation_collection_prefix }} > li:nth-child({{ nav_levels[1] }}) > button svg
     {%- for i in (2..nav_page_level) %},
-    {{ activation_collection_prefix }} > li:nth-child({{ nav_levels[1] }}) > 
+    {{ activation_collection_prefix }} > li:nth-child({{ nav_levels[1] }}) >
     {%- for j in (2..i) %} ul > li:nth-child({{ nav_levels[j] }}) >
     {%- endfor %} button svg
     {%- endfor %} {

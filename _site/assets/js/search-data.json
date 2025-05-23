@@ -1,184 +1,212 @@
 {"0": {
     "doc": "AlphaFold data",
     "title": "Visualising AlphaFold Data (pLDDT and AlphaMissense)",
-    "content": "Here, we demonstrate how to fetch and display both pLDDT confidence scores and AlphaMissense pathogenicity predictions from the AlphaFold Database. This script targets a human protein (Q9BYF1) for which AlphaMissense data is typically available. It uses AFDBClient to fetch both pLDDT scores and AlphaMissense predictions. | An AxisTrack provides the sequence scale. | A single AlphaFoldTrack is configured to display both plddt and alphamissense data. These are rendered as two separate, labelled sub-tracks within the AlphaFoldTrack group, allowing for direct comparison of model confidence and predicted variant impact along the sequence. | . from protviz import plot_protein_tracks from protviz.data_retrieval import AFDBClient, get_protein_sequence_length from protviz.tracks import AlphaFoldTrack, AxisTrack def main(): uniprot_id = \"Q9BYF1\" # A human protein known to have AlphaMissense data afdb_client = AFDBClient() try: seq_length = get_protein_sequence_length(uniprot_id) print(f\"Sequence length for {uniprot_id}: {seq_length}\") # Fetch both pLDDT and AlphaMissense data alphafold_data = afdb_client.get_alphafold_data( uniprot_id, requested_data_types=[\"plddt\", \"alphamissense\"] ) print(\"Fetched AlphaFold data.\") if alphafold_data.get(\"plddt\"): print(f\" pLDDT scores available: {len(alphafold_data['plddt'])}\") if alphafold_data.get(\"alphamissense\"): print(f\" AlphaMissense scores available: {len(alphafold_data['alphamissense'])}\") # Create tracks axis_trk = AxisTrack(sequence_length=seq_length, label=\"Sequence\") # Create a single AlphaFoldTrack to display both data types alphafold_multidata_track = AlphaFoldTrack( afdb_data=alphafold_data, plotting_options=[\"plddt\", \"alphamissense\"], # Specify both to be plotted main_label=\"AlphaFold Insights\", # Overall label for this group of AF tracks plddt_label=\"pLDDT Confidence\", alphamissense_label=\"AlphaMissense Pathogenicity (Avg.)\", sub_track_height=0.3, # Height for each row (pLDDT, AlphaMissense) sub_track_spacing=0.05 # Space between the pLDDT and AlphaMissense rows ) # Plot the tracks plot_protein_tracks( protein_id=uniprot_id, sequence_length=seq_length, tracks=[axis_trk, alphafold_multidata_track], figure_width=12, save_option=True ) print(f\"AlphaFold example plot saved as {uniprot_id}_plot.png\") except Exception as e: print(f\"An error occurred during the AlphaFold example: {e}\") import traceback traceback.print_exc() if __name__ == \"__main__\": main() . ",
+    "content": "Dark mode . Here, we demonstrate how to fetch and display both pLDDT confidence scores and AlphaMissense pathogenicity predictions from the AlphaFold Database. This script targets a human protein (Q9BYF1) for which AlphaMissense data is typically available. It uses AFDBClient to fetch both pLDDT scores and AlphaMissense predictions. | An AxisTrack provides the sequence scale. | A single AlphaFoldTrack is configured to display both plddt and alphamissense data. These are rendered as two separate, labelled sub-tracks within the AlphaFoldTrack group, allowing for direct comparison of model confidence and predicted variant impact along the sequence. | . from protviz import plot_protein_tracks from protviz.data_retrieval import AFDBClient, get_protein_sequence_length from protviz.tracks import AlphaFoldTrack, AxisTrack def main(): uniprot_id = \"Q12888\" # A human protein known to have AlphaMissense data afdb_client = AFDBClient() try: seq_length = get_protein_sequence_length(uniprot_id) print(f\"Sequence length for {uniprot_id}: {seq_length}\") # Fetch both pLDDT and AlphaMissense data alphafold_data = afdb_client.get_alphafold_data( uniprot_id, requested_data_types=[\"plddt\", \"alphamissense\"] ) print(\"Fetched AlphaFold data.\") if alphafold_data.get(\"plddt\"): print(f\" pLDDT scores available: {len(alphafold_data['plddt'])}\") if alphafold_data.get(\"alphamissense\"): print(f\" AlphaMissense scores available: {len(alphafold_data['alphamissense'])}\") # Create tracks axis_trk = AxisTrack(sequence_length=seq_length, label=\"Sequence\") # Create a single AlphaFoldTrack to display both data types alphafold_multidata_track = AlphaFoldTrack( afdb_data=alphafold_data, plotting_options=[\"plddt\", \"alphamissense\"], # Specify both to be plotted main_label=\"\", # Overall label for this group of AF tracks plddt_label=\"pLDDT\", alphamissense_label=\"AlphaMissense (Avg)\", sub_track_height=0.1, # Height for each row (pLDDT, AlphaMissense) sub_track_spacing=0.05 # Space between the pLDDT and AlphaMissense rows ) # Plot the tracks plot_protein_tracks( protein_id=uniprot_id, sequence_length=seq_length, tracks=[axis_trk, alphafold_multidata_track], figure_width=10, save_option=True ) print(f\"AlphaFold example plot saved as {uniprot_id}_plot.png\") except Exception as e: print(f\"An error occurred during the AlphaFold example: {e}\") import traceback traceback.print_exc() if __name__ == \"__main__\": main() . The previous example will generate a plot like this one: . ",
     "url": "/protviz/docs/examples/examples-list/afdb-example.html#visualising-alphafold-data-plddt-and-alphamissense",
-    
+
     "relUrl": "/docs/examples/examples-list/afdb-example.html#visualising-alphafold-data-plddt-and-alphamissense"
   },"1": {
     "doc": "AlphaFold data",
     "title": "AlphaFold data",
     "content": " ",
     "url": "/protviz/docs/examples/examples-list/afdb-example.html",
-    
+
     "relUrl": "/docs/examples/examples-list/afdb-example.html"
   },"2": {
     "doc": "Data Retrieval",
     "title": "Core Components: Data Retrieval Clients and Visualisation Tracks",
     "content": "Dark mode . Protviz is built around two key types of components: Data Retrieval Clients that fetch information from various bioinformatics databases, and Visualisation Tracks that display this information. Understanding these components will help you leverage the full power of the package. ",
     "url": "/protviz/docs/core-components/components/data-retrieval.html#core-components-data-retrieval-clients-and-visualisation-tracks",
-    
+
     "relUrl": "/docs/core-components/components/data-retrieval.html#core-components-data-retrieval-clients-and-visualisation-tracks"
   },"3": {
     "doc": "Data Retrieval",
     "title": "Data Retrieval Clients",
     "content": "These clients are your interface to external bioinformatics databases, simplifying the process of fetching data for your protein of interest. Each client is tailored to a specific data source. | get_protein_sequence_length() . | Purpose: To quickly obtain the authoritative sequence length of a protein from UniProt. This is a fundamental piece of information required by many tracks to correctly scale their visualisations. | Usage Example: from protviz.data_retrieval import get_protein_sequence_length uniprot_id = \"P0DTC2\" try: seq_len = get_protein_sequence_length(uniprot_id) print(f\"The sequence length of {uniprot_id} is {seq_len}.\") except ValueError as e: print(e) except Exception as e: # Other potential errors like network issues print(f\"An unexpected error occurred: {e}\") . | . | PDBeClient() . | Purpose: To interact with the Protein Data Bank in Europe (PDBe) API, primarily for fetching information about PDB structures related to your UniProt ID, including structural coverage and ligand interactions. | Initialisation and Usage Example: from protviz.data_retrieval import PDBeClient pdbe_client = PDBeClient() uniprot_id = \"P00533\" # EGFR, known for PDB entries and ligands pdb_structural_coverage = pdbe_client.get_pdb_coverage(uniprot_id) print(f\"Found {len(pdb_structural_coverage)} PDB coverage entries for {uniprot_id}.\") # Each item in pdb_structural_coverage is a dict like: # {'pdb_id': '2GS2', 'unp_start': 696, 'unp_end': 989} ligand_interaction_data = pdbe_client.get_pdb_ligand_interactions(uniprot_id) print(f\"Found {len(ligand_interaction_data)} ligand interaction contexts for {uniprot_id}.\") # Each item in ligand_interaction_data is a dict, e.g.: # {'ligand_id': 'STI', 'binding_site_uniprot_residues': [{'startIndex': 767, 'endIndex': 767, ...}, ...], 'pdb_id': '2ITP'} . | . | TEDClient() . | Purpose: To retrieve domain annotations from the TED (The Encyclopedia of Domains) database. These annotations often include CATH domain classifications and segment information. | Initialisation and Usage Example: from protviz.data_retrieval import TEDClient ted_client = TEDClient() uniprot_id = \"O15245\" ted_annotations = ted_client.get_TED_annotations(uniprot_id) print(f\"Found {len(ted_annotations)} TED annotations for {uniprot_id}.\") # Each item in ted_annotations is a dict like: # {'uniprot_acc': 'O15245', 'consensus_level': 'S100', 'chopping': '41-145_165-258', ...} . | . | AFDBClient() . | Purpose: To connect with the AlphaFold Database (AFDB) and fetch prediction data, most notably pLDDT (per-residue confidence scores) and AlphaMissense pathogenicity predictions. | Initialisation and Usage Example: from protviz.data_retrieval import AFDBClient afdb_client = AFDBClient() uniprot_id = \"Q9BYF1\" # Human protein with AlphaMissense data # You can request multiple data types alphafold_data_results = afdb_client.get_alphafold_data( uniprot_id, requested_data_types=[\"plddt\", \"alphamissense\"] ) plddt_scores = alphafold_data_results.get(\"plddt\", []) print(f\"Fetched {len(plddt_scores)} pLDDT scores for {uniprot_id}.\") # Each item in plddt_scores is a dict like: {'residue_number': 1, 'plddt': 35.2} alphamissense_predictions = alphafold_data_results.get(\"alphamissense\", []) print(f\"Fetched {len(alphamissense_predictions)} AlphaMissense predictions for {uniprot_id}.\") # Each item in alphamissense_predictions is a dict like: # {'residue_number': 1, 'ref_aa': 'M', 'alt_aa': 'A', 'am_pathogenicity': 0.02, 'am_class': 'likely_benign'} . | . | InterProClient() . | Purpose: To fetch domain and feature annotations from various InterPro member databases (e.g., Pfam, CATH-Gene3D) by leveraging the general InterPro API. | Initialisation and Usage Example: from protviz.data_retrieval import InterProClient interpro_client = InterProClient() uniprot_id = \"P04637\" # p53, has various InterPro entries pfam_domain_annotations = interpro_client.get_pfam_annotations(uniprot_id) print(f\"Found {len(pfam_domain_annotations)} Pfam annotations for {uniprot_id}.\") # Each item is a dict, e.g.: # {'accession': 'PF00870', 'name': 'P53 tumour suppressor family', 'description': 'P53 DNA-binding domain', ...} cath_gene3d_annotations = interpro_client.get_cathgene3d_annotations(uniprot_id) print(f\"Found {len(cath_gene3d_annotations)} CATH-Gene3D annotations for {uniprot_id}.\") # Similar structure to Pfam annotations, with CATH-Gene3D specific accessions. | . | . ",
     "url": "/protviz/docs/core-components/components/data-retrieval.html#data-retrieval-clients",
-    
+
     "relUrl": "/docs/core-components/components/data-retrieval.html#data-retrieval-clients"
   },"4": {
     "doc": "Data Retrieval",
     "title": "Data Retrieval",
     "content": " ",
     "url": "/protviz/docs/core-components/components/data-retrieval.html",
-    
+
     "relUrl": "/docs/core-components/components/data-retrieval.html"
   },"5": {
     "doc": "Features",
     "title": "Features of Protviz",
     "content": "Dark mode . Protviz is equipped with a comprehensive suite of features designed to streamline the process of fetching, integrating, and visualising diverse protein annotations. Below is a more detailed look at what Protviz offers: . ",
     "url": "/protviz/docs/features.html#features-of-protviz",
-    
+
     "relUrl": "/docs/features.html#features-of-protviz"
   },"6": {
     "doc": "Features",
     "title": "1. Extensive Data Retrieval Capabilities",
     "content": "Protviz connects to major bioinformatics databases, allowing you to gather a wide array of protein information with ease: . | UniProt Integration: . | Quickly fetch the authoritative sequence length for any protein using its UniProt ID, forming the basis for all sequence-scaled visualisations. | . | PDBe (Protein Data Bank in Europe) Connectivity: . | Structural Coverage: Identify which regions of a protein have been experimentally determined and are available in PDB structures. | Ligand Interactions: Pinpoint specific residues involved in binding to various ligands, crucial for understanding protein function and drug design. | . | TED Database Access: . | Retrieve domain annotations from the TED (The Encyclopedia of Domains) database, often including CATH superfamily classifications. | . | AlphaFold Database (AFDB) Integration: . | pLDDT Scores: Fetch and visualise per-residue confidence scores (pLDDT) from AlphaFold predictions, offering insights into model quality. | AlphaMissense Data: Access AlphaMissense pathogenicity predictions to evaluate the potential impact of missense variants. | . | InterPro Database Support: . | Gain access to a wealth of domain and feature annotations from various InterPro member databases, such as: . | Pfam: Visualise curated protein families and domains. | CATH-Gene3D: Display structural domain classifications. | . | . | . ",
     "url": "/protviz/docs/features.html#1-extensive-data-retrieval-capabilities",
-    
+
     "relUrl": "/docs/features.html#1-extensive-data-retrieval-capabilities"
   },"7": {
     "doc": "Features",
     "title": "2. Versatile Track-Based Visualisation",
     "content": "Protviz’s core strength lies in its flexible track-based system, allowing you to layer multiple types of annotations onto a single, coherent plot: . | AxisTrack: The foundational track that displays the protein sequence as a horizontal axis, complete with numbered tick marks for easy reference. It automatically adapts to zoomed views. | PDBTrack: Illustrates which parts of the protein are covered by PDB structures. Offers a \"full\" view (each PDB entry in a separate, labelled lane) or a \"collapse\" view (a merged representation of all covered regions). | LigandInteractionTrack: Specifically designed to show residues that bind to ligands. Like PDBTrack, it supports \"full\" (per-ligand) and \"collapse\" (merged sites) plotting options. | TEDDomainsTrack: Visualises domain segments from the TED database, with options to display each annotation uniquely or as a merged overview. | AlphaFoldTrack: Dedicated to displaying AlphaFold data. It can simultaneously plot pLDDT scores (colour-coded by confidence) and average AlphaMissense pathogenicity predictions in distinct sub-tracks. | InterProTrack: Displays domain signatures from InterPro member databases (e.g., Pfam, CATH-Gene3D). Supports \"full\" mode for detailed, per-signature rows with entry type and accession labels, and \"collapse\" mode for a merged view. | CustomTrack: The most adaptable track, enabling you to plot your own data. You can define: . | Sequence Ranges: Represent domains, motifs, or any region of interest as coloured bars. | Point Features: Mark specific residues (e.g., PTM sites, active site residues) using customisable markers. | Custom labels, colours, and grouping for each annotation. | . | . ",
     "url": "/protviz/docs/features.html#2-versatile-track-based-visualisation",
-    
+
     "relUrl": "/docs/features.html#2-versatile-track-based-visualisation"
   },"8": {
     "doc": "Features",
     "title": "3. Intuitive and Customisable Plotting",
     "content": "Protviz aims to make the creation of informative protein visualisations straightforward: . | Unified Plotting Function: The plot_protein_tracks() function serves as the central command to combine all your defined tracks into a final figure. | Zoom Functionality: Easily focus on specific regions of interest by specifying view_start_aa and view_end_aa parameters, allowing for detailed examination of annotations in high-density areas. | Clear Labelling: Automatic and customisable labelling for tracks, axes, and individual annotations ensures that your plots are easy to understand. | Save and Share: Plots can be saved directly to image files (e.g., PNG) suitable for inclusion in presentations, publications, or web resources. | Aesthetic Control: Options for colours, bar heights, spacing, and text sizes provide control over the visual appearance of the tracks and the overall plot. | . By combining these features, Protviz provides a powerful yet accessible platform for creating rich, multi-layered visualisations of protein sequence annotations. ",
     "url": "/protviz/docs/features.html#3-intuitive-and-customisable-plotting",
-    
+
     "relUrl": "/docs/features.html#3-intuitive-and-customisable-plotting"
   },"9": {
     "doc": "Features",
     "title": "Features",
     "content": " ",
     "url": "/protviz/docs/features.html",
-    
+
     "relUrl": "/docs/features.html"
   },"10": {
     "doc": "Getting Started",
     "title": "Getting Started",
     "content": "Dark mode . This guide will walk you through the fundamental steps to create your first protein annotation visualisation. We’ll fetch some data for a chosen protein and display it using a few basic tracks. ",
     "url": "/protviz/docs/getting-started.html",
-    
+
     "relUrl": "/docs/getting-started.html"
   },"11": {
     "doc": "Getting Started",
     "title": "Basic Usage",
     "content": "The core workflow in Protviz involves these main stages: . | Import necessary modules: You’ll need plot_protein_tracks for plotting, data retrieval clients (like PDBeClient, AFDBClient), and the specific track classes you wish to use (e.g., AxisTrack, PDBTrack). | Choose a UniProt ID: This will be the protein you want to visualise. | Initialise data retrieval clients: Create instances of the clients for the databases from which you want to fetch data. | Fetch protein information: . | Obtain the protein’s sequence length using get_protein_sequence_length(). This is crucial for setting up the scale of your visualisation. | Employ the client instances to fetch specific annotation data (e.g., PDB coverage, AlphaFold data). | . | Create tracks: For each piece of data you intend to visualise, instantiate a corresponding track object. Configure these tracks with the fetched data and any desired display options (labels, colours, plotting styles). | Plot the tracks: Utilise the plot_protein_tracks() function, providing it with the protein ID, sequence length, and a list of the tracks you have created. You can also specify the figure width and an option to save the plot. | . Here’s a simple example of how to use Protviz to fetch data and plot tracks for a protein: This example demonstrates a basic ProtViz workflow, fetching data from PDBe and UniProt and creating a simple plot. # 1. Import necessary modules from protviz import plot_protein_tracks from protviz.data_retrieval import PDBeClient, get_protein_sequence_length from protviz.tracks import AxisTrack, PDBTrack def main(): # 2. Choose a UniProt ID uniprot_id = \"P25494\" # Example: Human p53 protein # 3. Initialise Data Retrieval Clients pdbe_client = PDBeClient() try: # 4. Fetch Protein Information seq_length = get_protein_sequence_length(uniprot_id) # Fetch sequence length print(f\"Sequence length: {seq_length}\") pdb_coverage = pdbe_client.get_pdb_coverage(uniprot_id) # Fetch PDB coverage data from PDBe print(f\"PDB Coverage entries: {len(pdb_coverage)}\") # 5. Create Tracks axis_track = AxisTrack(sequence_length=seq_length, label=\"Sequence\") # The AxisTrack provides the main sequence axis pdb_track = PDBTrack(pdb_data=pdb_coverage, label=\"PDB Coverage\") # The PDBTrack will show PDB coverage # 6. Plot the Tracks plot_protein_tracks( protein_id=uniprot_id, sequence_length=seq_length, tracks=[axis_track, pdb_track], figure_width=8, # Width of the output figure save_option=True # Saves the plot as &lt;uniprot_id&gt;_plot.png ) print(f\"Plot saved as {uniprot_id}_plot.png\") except Exception as e: print(f\"An error occurred: {e}\") if __name__ == \"__main__\": main() . ",
     "url": "/protviz/docs/getting-started.html#basic-usage",
-    
+
     "relUrl": "/docs/getting-started.html#basic-usage"
   },"12": {
     "doc": "Getting Started",
     "title": "Explanation of the code",
     "content": ". | We commence by importing the necessary components from protviz. | We define uniprot_id = “P25494” as our target protein. | PDBeClient() is instantiated to interact with the PDBe database. | get_protein_sequence_length(uniprot_id) fetches the total length of our protein. | pdbe_client.get_pdb_coverage(uniprot_id) retrieves data concerning which parts of the protein are covered by PDB structures. | We then create three types of tracks: | AxisTrack: This is fundamental for displaying the sequence range. | PDBTrack: Configured to show a “collapsed” view of PDB coverage. This means overlapping regions from different PDB entries are merged into a single bar. | . | Finally, plot_protein_tracks(…) takes all this information and generates the visualisation. The save_option=True argument ensures the plot is saved as O15245_plot.png. | . After running this script, you will find an image file named O15245_plot.png in the same directory. This plot will display the sequence axis for O15245, a track indicating its PDB coverage. This basic example demonstrates the power and simplicity of Protviz. In the following sections, we’ll explore more advanced features, including different track types, data sources, and customisation options. ",
     "url": "/protviz/docs/getting-started.html#explanation-of-the-code",
-    
+
     "relUrl": "/docs/getting-started.html#explanation-of-the-code"
   },"13": {
-    "doc": "Core Components",
-    "title": "Core Components: Data Retrieval Clients and Visualisation Tracks",
-    "content": "Dark mode . Protviz is built around two key types of components: Data Retrieval Clients that fetch information from various bioinformatics databases, and Visualisation Tracks that display this information. Understanding these components will help you leverage the full power of the package. ",
-    "url": "/protviz/docs/core-components/#core-components-data-retrieval-clients-and-visualisation-tracks",
-    
-    "relUrl": "/docs/core-components/#core-components-data-retrieval-clients-and-visualisation-tracks"
-  },"14": {
-    "doc": "Core Components",
-    "title": "Core Components",
-    "content": " ",
-    "url": "/protviz/docs/core-components/",
-    
-    "relUrl": "/docs/core-components/"
-  },"15": {
-    "doc": "Examples",
-    "title": "Advanced usage &amp; examples",
-    "content": "Dark mode . Beyond visualising single data types, the real power of Protviz comes from its ability to integrate and display information from multiple sources simultaneously. By layering various tracks, you can build a comprehensive picture of your protein’s features, structural characteristics, and predicted properties. This section provides practical examples of how to combine different data retrieval clients and track types to create richer visualisations. Each example will focus on a specific combination of data, offering a complete script that you can adapt for your own proteins of interest. ",
-    "url": "/protviz/docs/examples/#advanced-usage--examples",
-    
-    "relUrl": "/docs/examples/#advanced-usage--examples"
-  },"16": {
-    "doc": "Examples",
-    "title": "Examples",
-    "content": " ",
-    "url": "/protviz/docs/examples/",
-    
-    "relUrl": "/docs/examples/"
-  },"17": {
     "doc": "Home",
     "title": "Protviz: Protein Annotation Visualizer",
     "content": "Dark mode . ProtViz is a Python package designed to simplify the retrieval and visualization of protein annotations and structural information. It provides a powerful and intuitive way to fetch data from multiple bioinformatics databases and plot this information along a protein sequence using a flexible track-based system. ",
     "url": "/protviz/#protviz-protein-annotation-visualizer",
-    
+
     "relUrl": "/#protviz-protein-annotation-visualizer"
-  },"18": {
+  },"14": {
     "doc": "Home",
     "title": "Key Features",
     "content": "Protviz simplifies complex protein data visualization with a range of powerful features: . | Comprehensive Data Retrieval: . | Fetch protein sequence length directly from UniProt. | Retrieve PDB structure coverage and detailed ligand interaction data from the Protein Data Bank in Europe (PDBe). | Get domain annotations from the TED database. | Fetch per-residue confidence scores (pLDDT) and AlphaMissense pathogenicity predictions from the AlphaFold Database (AFDB). | Access domain information from InterPro member databases like Pfam and CATH-Gene3D. | . | Flexible Track-Based Visualization: Protviz employs an intuitive track system to display diverse annotations: . | AxisTrack: Essential for displaying the sequence axis and length context. | PDBTrack: Clearly shows regions covered by PDB structures, with options for detailed or collapsed views. | LigandInteractionTrack: Highlights residues involved in ligand binding. | TEDDomainsTrack: Visualizes domains as defined by the TED database. | AlphaFoldTrack: Displays AlphaFold’s pLDDT and AlphaMissense scores along the sequence. | InterProTrack: Shows domain signatures from various InterPro member databases. | CustomTrack: Offers the ultimate flexibility to plot your own arbitrary annotations, whether they are sequence ranges or specific point features, with full control over appearance. | . | User-Friendly Plotting: . | Seamlessly combine multiple tracks into a single, coherent, and easy-to-interpret figure. | Effortlessly zoom into specific regions of the protein sequence for detailed analysis. | Conveniently save your plots in high quality for presentations and publications. | . | . ",
     "url": "/protviz/#key-features",
-    
+
     "relUrl": "/#key-features"
-  },"19": {
+  },"15": {
     "doc": "Home",
     "title": "Get Started Quickly",
-    "content": "Jump right in by following our Getting Started: Your First Protviz Plot guide, or explore the Core Components to understand the data retrieval clients and visualization tracks in detail. ",
+    "content": "Jump right in by following our Getting Started guide, or explore the Core Components to understand the data retrieval clients and visualization tracks in detail. ",
     "url": "/protviz/#get-started-quickly",
-    
+
     "relUrl": "/#get-started-quickly"
-  },"20": {
+  },"16": {
     "doc": "Home",
     "title": "Dependencies",
     "content": "Protviz relies on a few key Python libraries: . | numpy&gt;=1.20 | matplotlib&gt;=3.4 | requests&gt;=2.20 | gemmi (specifically for parsing CIF files when fetching data from the AlphaFold Database) | . We recommend installing Protviz in a dedicated virtual environment. License . ProtViz is distributed by an MIT license . ",
     "url": "/protviz/#dependencies",
-    
+
     "relUrl": "/#dependencies"
-  },"21": {
+  },"17": {
     "doc": "Home",
     "title": "Home",
     "content": " ",
     "url": "/protviz/",
-    
+
     "relUrl": "/"
+  },"18": {
+    "doc": "Examples",
+    "title": "Advanced usage &amp; examples",
+    "content": "Dark mode . Beyond visualising single data types, the real power of Protviz comes from its ability to integrate and display information from multiple sources simultaneously. By layering various tracks, you can build a comprehensive picture of your protein’s features, structural characteristics, and predicted properties. This section provides practical examples of how to combine different data retrieval clients and track types to create richer visualisations. Each example will focus on a specific combination of data, offering a complete script that you can adapt for your own proteins of interest. ",
+    "url": "/protviz/docs/examples/#advanced-usage--examples",
+
+    "relUrl": "/docs/examples/#advanced-usage--examples"
+  },"19": {
+    "doc": "Examples",
+    "title": "Examples",
+    "content": " ",
+    "url": "/protviz/docs/examples/",
+
+    "relUrl": "/docs/examples/"
+  },"20": {
+    "doc": "Core Components",
+    "title": "Core Components: Data Retrieval Clients and Visualisation Tracks",
+    "content": "Dark mode . Protviz is built around two key types of components: Data Retrieval Clients that fetch information from various bioinformatics databases, and Visualisation Tracks that display this information. Understanding these components will help you leverage the full power of the package. ",
+    "url": "/protviz/docs/core-components/#core-components-data-retrieval-clients-and-visualisation-tracks",
+
+    "relUrl": "/docs/core-components/#core-components-data-retrieval-clients-and-visualisation-tracks"
+  },"21": {
+    "doc": "Core Components",
+    "title": "Core Components",
+    "content": " ",
+    "url": "/protviz/docs/core-components/",
+
+    "relUrl": "/docs/core-components/"
   },"22": {
+    "doc": "InterPro data",
+    "title": "Visualising InterPro Domain Annotations (Pfam and CATH-Gene3D)",
+    "content": "Dark mode . This example demonstrates fetching domain information from InterPro member databases, specifically Pfam and CATH-Gene3D, and visualising them. This script uses the InterProClient to fetch domain annotations from both Pfam and CATH-Gene3D for the protein p53 (P04637). | An AxisTrack sets the sequence scale. | Two InterProTrack instances are created: one for Pfam data and one for CATH-Gene3D data. | Both tracks use plotting_option=”full” and show_domain_labels=True to display each domain signature in its own lane, labelled with its accession, name, and InterPro entry type. The database_name_for_label parameter is crucial for accurate labelling in “full” mode. This allows for a clear comparison of domain architectures as defined by different InterPro member databases. | . from protviz import plot_protein_tracks from protviz.data_retrieval import InterProClient, get_protein_sequence_length from protviz.tracks import AxisTrack, InterProTrack def main(): uniprot_id = \"Q92794\" # p53 - has Pfam and CATH-Gene3D entries via InterPro interpro_client = InterProClient() try: seq_length = get_protein_sequence_length(uniprot_id) print(f\"Sequence length for {uniprot_id}: {seq_length}\") # Fetch Pfam annotations pfam_annotations = interpro_client.get_pfam_annotations(uniprot_id) if pfam_annotations: print(f\"Found {len(pfam_annotations)} Pfam annotations.\") else: print(\"No Pfam annotations found.\") # Fetch CATH-Gene3D annotations cath_gene3d_annotations = interpro_client.get_cathgene3d_annotations(uniprot_id) if cath_gene3d_annotations: print(f\"Found {len(cath_gene3d_annotations)} CATH-Gene3D annotations.\") else: print(\"No CATH-Gene3D annotations found.\") # Create tracks axis_trk = AxisTrack(sequence_length=seq_length, label=\"Sequence\") pfam_trk = InterProTrack( domain_data=pfam_annotations, database_name_for_label=\"Pfam\", # Important for labelling label=\"Pfam Domains\", plotting_option=\"full\", show_domain_labels=True ) cath_gene3d_trk = InterProTrack( domain_data=cath_gene3d_annotations, database_name_for_label=\"CATH-Gene3D\", # Important for labelling label=\"CATH-Gene3D Domains\", plotting_option=\"full\", show_domain_labels=True ) # Plot the tracks plot_protein_tracks( protein_id=uniprot_id, sequence_length=seq_length, tracks=[axis_trk, pfam_trk, cath_gene3d_trk], figure_width=14, figure_height = 6, save_option=True ) print(f\"InterPro example plot saved as {uniprot_id}_plot.png\") except Exception as e: print(f\"An error occurred during the InterPro example: {e}\") import traceback traceback.print_exc() if __name__ == \"__main__\": main() . The previous example will generate a plot like this one: . ",
+    "url": "/protviz/docs/examples/examples-list/interpro-example.html#visualising-interpro-domain-annotations-pfam-and-cath-gene3d",
+
+    "relUrl": "/docs/examples/examples-list/interpro-example.html#visualising-interpro-domain-annotations-pfam-and-cath-gene3d"
+  },"23": {
+    "doc": "InterPro data",
+    "title": "InterPro data",
+    "content": " ",
+    "url": "/protviz/docs/examples/examples-list/interpro-example.html",
+
+    "relUrl": "/docs/examples/examples-list/interpro-example.html"
+  },"24": {
     "doc": "PDB data",
     "title": "Visualising PDBe Data (Structural coverage and ligand interactions)",
-    "content": "This example demonstrates how to display both the PDB structural coverage and specific ligand interaction sites for a protein, using data fetched from the PDBe. We’ll also include a CustomTrack to show how user-defined annotations can be overlaid. This script fetches PDB coverage and ligand interactions for the specified UniProt ID (EGFR, P00533). It then creates: . | An AxisTrack for sequence context. | A PDBTrack in “collapse” mode to show overall structural coverage. | A LigandInteractionTrack in “full” mode to detail individual ligand binding sites. | A CustomTrack to overlay user-defined annotations, such as key functional sites or approximate domain boundaries. The resulting plot provides a multi-layered view of structural features and ligand binding relative to the protein sequence and custom points of interest. | . from protviz import plot_protein_tracks from protviz.data_retrieval import PDBeClient, get_protein_sequence_length from protviz.tracks import AxisTrack, LigandInteractionTrack, PDBTrack, CustomTrack def main(): uniprot_id = \"P00533\" # EGFR - a receptor tyrosine kinase with many PDB entries and ligands pdbe_client = PDBeClient() try: seq_length = get_protein_sequence_length(uniprot_id) print(f\"Sequence length for {uniprot_id}: {seq_length}\") # Fetch PDB coverage pdb_coverage_data = pdbe_client.get_pdb_coverage(uniprot_id) if pdb_coverage_data: print(f\"Found {len(pdb_coverage_data)} PDB coverage entries.\") else: print(f\"No PDB coverage data found for {uniprot_id}.\") # Fetch ligand interactions ligand_interaction_data = pdbe_client.get_pdb_ligand_interactions(uniprot_id) if ligand_interaction_data: print(f\"Found {len(ligand_interaction_data)} ligand interaction contexts.\") else: print(f\"No ligand interaction data found for {uniprot_id}.\") # Example custom annotations (e.g., known PTM sites or functional regions) custom_annotations = [ {\"position\": 719, \"label\": \"Y719-P (Active Site)\", \"row_label\": \"Key Sites\", \"color\": \"red\", \"display_type\": \"marker\", \"marker_symbol\": \"o\", \"marker_size\": 7}, {\"start\": 700, \"end\": 950, \"label\": \"Kinase Domain (approx.)\", \"row_label\": \"Domains\", \"color\": \"purple\", \"display_type\": \"bar\"}, ] # Create tracks axis_trk = AxisTrack(sequence_length=seq_length, label=\"Sequence\") pdb_trk_summary = PDBTrack( pdb_data=pdb_coverage_data, label=\"PDB Coverage\", plotting_option=\"collapse\", # Show overall coverage color=\"skyblue\" ) ligand_trk_detailed = LigandInteractionTrack( interaction_data=ligand_interaction_data, label=\"Ligand Binding\", plotting_option=\"full\", # Show each ligand separately show_ligand_labels=True, site_height=0.15 # Adjust height for clarity if many ligands ) custom_feature_track = CustomTrack( annotation_data=custom_annotations, label=\"Custom Features\", show_row_labels=True, ann_height=0.2 ) # Plot all tracks plot_protein_tracks( protein_id=uniprot_id, sequence_length=seq_length, tracks=[axis_trk, pdb_trk_summary, ligand_trk_detailed, custom_feature_track], figure_width=14, # Adjust width as needed save_option=True ) print(f\"PDBe example plot saved as {uniprot_id}_plot.png\") except Exception as e: print(f\"An error occurred during the PDBe example: {e}\") import traceback traceback.print_exc() if __name__ == \"__main__\": main() . ",
+    "content": "Dark mode . This example demonstrates how to display both the PDB structural coverage and specific ligand interaction sites for a protein, using data fetched from the PDBe. We’ll also include a CustomTrack to show how user-defined annotations can be overlaid. This script fetches PDB coverage and ligand interactions for the specified UniProt ID (EGFR, P00533). It then creates: . | An AxisTrack for sequence context. | A PDBTrack in “collapse” mode to show overall structural coverage. | A LigandInteractionTrack in “full” mode to detail individual ligand binding sites. | A CustomTrack to overlay user-defined annotations, such as key functional sites or approximate domain boundaries. The resulting plot provides a multi-layered view of structural features and ligand binding relative to the protein sequence and custom points of interest. | . from protviz import plot_protein_tracks from protviz.data_retrieval import PDBeClient, get_protein_sequence_length from protviz.tracks import AxisTrack, LigandInteractionTrack, PDBTrack, CustomTrack def main(): uniprot_id = \"P00533\" # EGFR - a receptor tyrosine kinase with many PDB entries and ligands pdbe_client = PDBeClient() try: seq_length = get_protein_sequence_length(uniprot_id) print(f\"Sequence length for {uniprot_id}: {seq_length}\") # Fetch ligand interactions ligand_interaction_data = pdbe_client.get_pdb_ligand_interactions(uniprot_id) if ligand_interaction_data: print(f\"Found {len(ligand_interaction_data)} ligand interaction contexts.\") else: print(f\"No ligand interaction data found for {uniprot_id}.\") # Create tracks axis_trk = AxisTrack(sequence_length=seq_length, label=\"Sequence\") ligand_trk_detailed = LigandInteractionTrack( interaction_data=ligand_interaction_data, label=\"Ligand Binding\", plotting_option=\"full\", # Show each ligand separately show_ligand_labels=False, site_height=0.5, # Adjust height for clarity if many ligands ) # Plot all tracks plot_protein_tracks( protein_id=uniprot_id, sequence_length=seq_length, tracks=[axis_trk, ligand_trk_detailed], figure_width=12, # Adjust width as needed figure_height = 8, save_option=True ) print(f\"PDBe example plot saved as {uniprot_id}_plot.png\") except Exception as e: print(f\"An error occurred during the PDBe example: {e}\") import traceback traceback.print_exc() if __name__ == \"__main__\": main() . The previous example will generate an image like this one: . ",
     "url": "/protviz/docs/examples/examples-list/pdbe-example.html#visualising-pdbe-data-structural-coverage-and-ligand-interactions",
-    
+
     "relUrl": "/docs/examples/examples-list/pdbe-example.html#visualising-pdbe-data-structural-coverage-and-ligand-interactions"
-  },"23": {
+  },"25": {
     "doc": "PDB data",
     "title": "PDB data",
     "content": " ",
     "url": "/protviz/docs/examples/examples-list/pdbe-example.html",
-    
+
     "relUrl": "/docs/examples/examples-list/pdbe-example.html"
-  },"24": {
+  },"26": {
     "doc": "Running Examples",
     "title": "Running Examples",
     "content": "Dark mode . The package includes several example scripts (e.g., example_pdbe.py, example_afdb.py) in the examples/ directory. To run an example, navigate to the directory containing the scripts and execute it with Python: . python examples/example_afdb.py . ",
     "url": "/protviz/docs/running-examples.html",
-    
+
     "relUrl": "/docs/running-examples.html"
-  },"25": {
+  },"27": {
+    "doc": "TED data",
+    "title": "Visualising TED  Annotations",
+    "content": "Dark mode . This example focuses on fetching domain annotations from the TED database and displaying them. The script uses TEDClient to retrieve domain annotations for the given UniProt ID. | An AxisTrack is included. | A PDBTrack is added to show the PDB coverage, providing structural context to the TED domains. | The TEDDomainsTrack is configured with plotting_option=”full” to display each distinct TED annotation (which may itself comprise multiple segments) in a separate, uniquely coloured lane. show_domain_labels=True ensures that CATH labels associated with these domains are displayed. | . from protviz import plot_protein_tracks from protviz.data_retrieval import TEDClient, get_protein_sequence_length, PDBeClient from protviz.tracks import AxisTrack, TEDDomainsTrack, PDBTrack # Added PDBTrack for context def main(): uniprot_id = \"O15245\" # Example UniProt ID with TED annotations ted_client = TEDClient() pdbe_client = PDBeClient() # For adding PDB context try: seq_length = get_protein_sequence_length(uniprot_id) print(f\"Sequence length for {uniprot_id}: {seq_length}\") # Fetch TED annotations ted_domain_annotations = ted_client.get_TED_annotations(uniprot_id) if ted_domain_annotations: print(f\"Found {len(ted_domain_annotations)} TED domain annotations.\") else: print(f\"No TED annotation data found for {uniprot_id}.\") # Fetch PDB coverage for context pdb_coverage = pdbe_client.get_pdb_coverage(uniprot_id) # Create tracks axis_trk = AxisTrack(sequence_length=seq_length, label=\"Sequence\") pdb_context_trk = PDBTrack( pdb_data=pdb_coverage, label=\"PDB Coverage\", plotting_option=\"collapse\" ) ted_domains_trk_detailed = TEDDomainsTrack( ted_annotations=ted_domain_annotations, label=\"TED Domains (Full View)\", plotting_option=\"full\", # Show each TED annotation in its own lane show_domain_labels=True # Display CATH labels if available ) # Plot the tracks plot_protein_tracks( protein_id=uniprot_id, sequence_length=seq_length, tracks=[axis_trk, pdb_context_trk, ted_domains_trk_detailed], figure_width=12, save_option=True ) print(f\"TED example plot saved as {uniprot_id}_plot.png\") except Exception as e: print(f\"An error occurred during the TED example: {e}\") import traceback traceback.print_exc() if __name__ == \"__main__\": main() . The previous example will generate a plot like this one: . ",
+    "url": "/protviz/docs/examples/examples-list/ted-example%20copy.html#visualising-ted--annotations",
+
+    "relUrl": "/docs/examples/examples-list/ted-example%20copy.html#visualising-ted--annotations"
+  },"28": {
+    "doc": "TED data",
+    "title": "TED data",
+    "content": " ",
+    "url": "/protviz/docs/examples/examples-list/ted-example%20copy.html",
+
+    "relUrl": "/docs/examples/examples-list/ted-example%20copy.html"
+  },"29": {
     "doc": "Visualisation Tracks",
     "title": "Visualisation Tracks",
     "content": "Dark mode . Once you have retrieved your data, Visualisation Tracks are used to display it on the protein plot. Each track is a layer showing a specific type of annotation. Protviz offers a variety of specialised tracks, and you can combine multiple tracks to create a comprehensive view of your protein. All tracks inherit from a BaseTrack class, which provides common functionalities like handling labels and height. When you create a plot using plot_protein_tracks(), you provide a list of these track objects. They are then drawn in order, typically from the bottom of the plot upwards. Here’s a detailed look at the available track types: . | AxisTrack . | Purpose: Displays the main horizontal axis representing the protein sequence. It includes numbered tick marks and an optional label, providing essential context for all other annotations. | Key Parameters: . | sequence_length (int): The total length of the protein. This is crucial for scaling the axis correctly. | label (str, optional): A descriptive label for the axis (e.g., “Sequence”, “Protein Length”). Defaults to “Sequence”. | tick_interval (int, optional): Allows you to suggest an interval for the major tick marks. If omitted, Protviz calculates a sensible default based on the viewable sequence range. | . | Usage Example: from protviz.tracks import AxisTrack # Assuming seq_len is already fetched # seq_len = get_protein_sequence_length(\"P0DTC2\") axis = AxisTrack(sequence_length=seq_len, label=\"SARS-CoV-2 Spike Protein\") . | . | PDBTrack . | Purpose: Visualises regions of the protein that are covered by structural entries in the Protein Data Bank (PDB). | Data Input: Expects a list of dictionaries, typically from PDBeClient().get_pdb_coverage(), where each dictionary details a PDB entry’s start and end on the UniProt sequence. | Key Parameters: . | pdb_data (List[Dict]): The PDB coverage data. | label (str, optional): Label for the track (e.g., “PDB Coverage”). | plotting_option (str, optional): . | \"full\": Each PDB entry is drawn in a separate lane, attempting to label them with their PDB ID if space allows. This helps distinguish individual structural contributions. | \"collapse\" (default): Merges all overlapping PDB covered regions into a single, continuous bar, giving an overview of overall structural coverage. | . | bar_height (float, optional): The height of the PDB bars. | color (str, optional): The fill colour for the PDB bars. | . | Usage Example: from protviz.tracks import PDBTrack # Assuming pdbe_client is initialised and pdb_coverage_data is fetched # pdb_coverage_data = pdbe_client.get_pdb_coverage(\"P00533\") pdb_track_full = PDBTrack(pdb_data=pdb_coverage_data, label=\"PDB Entries (Full)\", plotting_option=\"full\") pdb_track_summary = PDBTrack(pdb_data=pdb_coverage_data, label=\"PDB Coverage (Summary)\", plotting_option=\"collapse\", color=\"lightcoral\") . | . | LigandInteractionTrack . | Purpose: Highlights sites on the protein that are known to interact with ligands, based on data from PDB entries. | Data Input: Expects a list of dictionaries from PDBeClient().get_pdb_ligand_interactions(), where each dictionary represents a ligand and its interacting residue ranges on the UniProt sequence. | Key Parameters: . | interaction_data (List[Dict]): The ligand interaction data. | label (str, optional): Label for the track (e.g., “Ligand Binding Sites”). | plotting_option (str, optional): . | \"full\" (default): Each unique ligand is shown in its own lane, with its binding sites represented as bars. Ligand IDs are typically displayed. | \"collapse\": All ligand binding sites from all ligands are merged into a single representative bar. | . | show_ligand_labels (bool, optional): If True (default), displays ligand IDs next to their respective lanes in “full” mode. | site_height (float, optional): Height of the bars representing binding sites. | default_color (str, optional): Colour used in “collapse” mode, or if distinct colours for ligands run out. | . | Usage Example: from protviz.tracks import LigandInteractionTrack # Assuming pdbe_client is initialised and ligand_data is fetched # ligand_data = pdbe_client.get_pdb_ligand_interactions(\"P00533\") ligand_track = LigandInteractionTrack( interaction_data=ligand_data, label=\"Ligand Interactions\", plotting_option=\"full\", show_ligand_labels=True ) . | . | TEDDomainsTrack . | Purpose: Displays structural domain annotations sourced from the TED database. TED annotations often include CATH domain classifications and defined segment boundaries (“chopping”). | Data Input: Expects a list of dictionaries, usually from TEDClient().get_TED_annotations(). | Key Parameters: . | ted_annotations (List[Dict]): The TED annotation data. | label (str, optional): Label for the track (e.g., “TED Domains”). | plotting_option (str, optional): . | \"full\": Each original TED annotation (which can consist of multiple segments) is drawn in its own lane, coloured uniquely, and can be labelled with its CATH classification. | \"collapse\" (default): All domain segments from all TED annotations are merged and drawn as a single bar. | . | show_domain_labels (bool, optional): If True (default), displays CATH labels for each lane in “full” mode. | domain_height (float, optional): Height of the domain bars/segments. | . | Usage Example: from protviz.tracks import TEDDomainsTrack # Assuming ted_client is initialised and ted_domain_data is fetched # ted_domain_data = ted_client.get_TED_annotations(\"O15245\") ted_track_detailed = TEDDomainsTrack( ted_annotations=ted_domain_data, label=\"TED Domains (Detailed View)\", plotting_option=\"full\", show_domain_labels=True ) . | . | AlphaFoldTrack . | Purpose: Visualises prediction metrics from the AlphaFold Database, primarily the per-residue pLDDT confidence scores and (average) AlphaMissense pathogenicity scores. | Data Input: Expects a dictionary from AFDBClient().get_alphafold_data(), where keys are data types (e.g., \"plddt\", \"alphamissense\") and values are lists of corresponding score entries. | Key Parameters: . | afdb_data (Dict[str, List[Dict]]): The AlphaFold data. | plotting_options (List[str], optional): A list specifying which data types to plot from the afdb_data dictionary (e.g., [\"plddt\"], [\"alphamissense\"], or [\"plddt\", \"alphamissense\"]). If None, it attempts to plot all supported types found in the data. | main_label (str, optional): An overall label for the group of AlphaFold sub-tracks. | plddt_label (str, optional): Custom label for the pLDDT sub-track. Defaults to “pLDDT”. | alphamissense_label (str, optional): Custom label for the AlphaMissense sub-track. Defaults to “AlphaMissense (avg)”. | sub_track_height (float, optional): Height for each individual row (pLDDT, AlphaMissense). | . | Usage Example: from protviz.tracks import AlphaFoldTrack # Assuming afdb_client is initialised and alphafold_prediction_data is fetched # alphafold_prediction_data = afdb_client.get_alphafold_data(\"P0DTC2\", requested_data_types=[\"plddt\", \"alphamissense\"]) alphafold_viewer_track = AlphaFoldTrack( afdb_data=alphafold_prediction_data, plotting_options=[\"plddt\", \"alphamissense\"], main_label=\"AlphaFold Predictions\", plddt_label=\"Model Confidence (pLDDT)\", alphamissense_label=\"Pathogenicity (AM)\" ) . | . | InterProTrack . | Purpose: Displays domain and feature annotations sourced from InterPro member databases like Pfam or CATH-Gene3D. | Data Input: Expects a list of domain annotation dictionaries, typically obtained from methods like InterProClient().get_pfam_annotations() or InterProClient().get_cathgene3d_annotations(). | Key Parameters: . | domain_data (List[Dict]): The list of domain annotations. | database_name_for_label (str): The name of the member database (e.g., “Pfam”, “CATH-Gene3D”). This is used in labels if show_domain_labels is active. | label (str, optional): A main label for the track. | plotting_option (str, optional): . | \"full\" (default): Each unique domain signature from the member database is displayed in its own row. Labels on the right can show the domain’s type (from InterPro), name, and its specific accession from the member database. | \"collapse\": All domain segments are merged into a single representative bar. | . | show_domain_labels (bool, optional): If True (default), displays detailed labels on the right side in “full” mode. | domain_height (float, optional): The height of the domain bars. | . | Usage Example: from protviz.tracks import InterProTrack # Assuming interpro_client is initialised and pfam_data is fetched # pfam_data = interpro_client.get_pfam_annotations(\"P04637\") pfam_domains_track = InterProTrack( domain_data=pfam_data, database_name_for_label=\"Pfam\", label=\"Pfam Domains\", plotting_option=\"full\" ) . | . | CustomTrack . | Purpose: Offers maximum flexibility by allowing you to plot your own, arbitrary annotations. This is ideal for data not covered by the specialised tracks, such as post-translational modification (PTM) sites, specific motifs, or user-defined regions of interest. | Data Input: A list of dictionaries, where each dictionary defines a custom annotation. | Key Parameters for each annotation item in annotation_data: . | start (int) and end (int): For range-based annotations (displayed as bars by default). | OR position (int): For point-based annotations (displayed as markers by default). Protviz treats this as start = end = position. | label (str, optional): A specific label for this individual annotation, typically shown on the right. | row_label (str, optional): A label to group annotations into horizontal lanes, shown on the left. If multiple annotations share the same row_label, they will effectively be grouped, though each still gets its own visual lane in the current implementation. | color (str, optional): Colour for the annotation. | display_type (str, optional): Can be \"bar\" or \"marker\". If not specified, it defaults to \"marker\" for point annotations (start == end) and \"bar\" for range annotations. | marker_symbol (str, optional): Matplotlib marker symbol (e.g., \"o\", \"P\", \"*\"), used if display_type=\"marker\". | marker_size (int, optional): Size of the marker. | . | Key Parameters for the CustomTrack itself: . | annotation_data (List[Dict]): The list of custom annotation dictionaries. | label (str, optional): An overall label for the entire custom track group. | show_row_labels (bool, optional): Whether to display the row_labels on the left. Default is True. | show_ann_labels (bool, optional): Whether to display the individual annotation labels on the right. Default is True. | ann_height (float, optional): Height of each annotation’s visual lane. | . | Usage Example: from protviz.tracks import CustomTrack my_annotations = [ {\"position\": 45, \"label\": \"S45-P\", \"row_label\": \"Phosphorylation\", \"color\": \"blue\", \"display_type\": \"marker\", \"marker_symbol\": \"P\"}, {\"start\": 100, \"end\": 150, \"label\": \"Binding Motif\", \"row_label\": \"Motifs\", \"color\": \"green\"}, {\"position\": 188, \"label\": \"Y188-OH\", \"row_label\": \"Hydroxylation\", \"color\": \"purple\", \"display_type\": \"marker\", \"marker_symbol\": \"*\"}, {\"start\": 200, \"end\": 210, \"label\": \"Signal Peptide\", \"row_label\": \"Processing\", \"color\": \"orange\"} ] user_defined_track = CustomTrack(annotation_data=my_annotations, label=\"My Custom Features\") . | . | . By combining these diverse tracks, you can construct highly informative and tailored visualisations of your protein data. The final appearance can be further tuned using parameters within plot_protein_tracks() such as figure width and zoom levels. ",
     "url": "/protviz/docs/core-components/components/visualisation-tracks.html",
-    
+
     "relUrl": "/docs/core-components/components/visualisation-tracks.html"
   }
 }

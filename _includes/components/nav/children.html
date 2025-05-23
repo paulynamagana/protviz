@@ -32,7 +32,7 @@
       and nav_child can also be 2nd-level. This is for backwards compatibility with
       existing 3-level sites.
     {%- endcomment -%}
-    {%- if nav_child.grand_parent == nil and nav_child.ancestor == nil and 
+    {%- if nav_child.grand_parent == nil and nav_child.ancestor == nil and
           nav_top_node_titles contains nav_child.parent and include.ancestors.size >= 1 -%}
       {%- assign nav_child_ok = false -%}
     {%- endif -%}

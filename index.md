@@ -28,7 +28,7 @@ jtd.addEvent(toggleDarkMode, 'click', function(){
 ![Python Tests](https://github.com/paulynamagana/protviz/actions/workflows/python-tests.yml/badge.svg?branch=main)
 
 ProtViz is a Python package designed to simplify the retrieval and visualization of protein annotations and structural information.
-It provides a powerful and intuitive way to fetch data from multiple bioinformatics databases and plot this information along a protein sequence using a flexible track-based system. 
+It provides a powerful and intuitive way to fetch data from multiple bioinformatics databases and plot this information along a protein sequence using a flexible track-based system.
 {: .fs-6 .fw-300 }
 
 ## Key Features
@@ -60,7 +60,7 @@ Protviz simplifies complex protein data visualization with a range of powerful f
 
 ## Get Started Quickly
 
-Jump right in by following our **[Getting Started: Your First Protviz Plot](./getting-started.md)** guide, or explore the **[Core Components](./core-components.md)** to understand the data retrieval clients and visualization tracks in detail.
+Jump right in by following our **[Getting Started](./docs/getting-started)** guide, or explore the **[Core Components](./docs/core-components/index)** to understand the data retrieval clients and visualization tracks in detail.
 
 ## Dependencies
 

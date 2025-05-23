@@ -37,9 +37,9 @@
         | split: nav_list_link | last
         | split: "</a>" | slice: 1 | first -%}
 
-  {%- assign nav_child_test = nav_child_start 
+  {%- assign nav_child_test = nav_child_start
         | remove_first: nav_list_simple | prepend: nav_list_simple -%}
-    
+
   {%- if nav_child_start != nav_child_test -%}
     {%- assign nav_children = "" | split: "" -%}
   {%- endif -%}
