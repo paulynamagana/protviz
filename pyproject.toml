@@ -29,8 +29,10 @@ classifiers = [
 dependencies = [
     "numpy>=1.20",
     "matplotlib>=3.4",
-    "requests>=2.20",
-    "gemmi==0.7.1"
+    "requests>=2.32",
+    "gemmi==0.7.1",
+    "requests-cache==1.2.1",  # Added
+    "platformdirs>=4.3",    # Added
 ]
 
 
@@ -44,7 +46,8 @@ dev = [
     "black",
     "ruff",
     "pytest-mock",
-    "pre-commit"
+    "pre-commit",
+    "deptry>=0.16.0"
 ]
 
 # Ruff configuration

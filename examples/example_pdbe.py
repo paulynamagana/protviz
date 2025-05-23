@@ -81,7 +81,8 @@ def main():
             protein_id=uniprot_id,
             sequence_length=seq_length,
             tracks=[axis_trk, pdb_trk_lig, ligand_trk, ptms_track],
-            figure_width=8,
+            figure_width=12,
+            figure_height=10,
             save_option=True,
         )
 

@@ -1,8 +1,11 @@
 # src/protviz/data_retrieval/pdbe_client.py
 import logging
+import os
 from typing import Any, Dict, List
 
+import platformdirs
 import requests
+import requests_cache
 
 # Set up logging
 logging.basicConfig(
@@ -12,64 +15,85 @@ logging.basicConfig(
 
 class PDBeClient:
     """
-    Client for fetching data from the Protein Data Bank in Europe (PDBe) APIs.
+    Client for fetching data from the Protein Data Bank in Europe (PDBe) APIs,
+    with built-in, user-directory-based caching.
     """
 
     PDBE_GRAPH_API_BASE_URL = "https://www.ebi.ac.uk/pdbe/graph-api"
 
-    def __init__(self, timeout: int = 10):
+    def __init__(
+        self,
+        timeout: int = 10,
+        cache_name: str = "pdbe_api_cache",
+        expire_after: int = 86400,  # Cache expires after 1 day (86400 seconds)
+        app_name: str = "protviz",  # Your package/app name
+        app_author: str = "ProtvizTeam",  # Your team/author name
+    ):
         """
-        Initialises the PDBeClient.
+        Initialises the PDBeClient with caching enabled in the user cache dir.
 
         Args:
             timeout (int): Default timeout for API requests in seconds.
+            cache_name (str): The base name for the cache file (e.g., 'pdbe_api_cache').
+            expire_after (int): Time in seconds after which cached responses expire.
+                                Use -1 for no expiration.
+            app_name (str): The name of your application/package for platformdirs.
+            app_author (str): The author/vendor name for platformdirs.
         """
         self.timeout = timeout
-        self.session = requests.Session()
+
+        # --- Caching Location Improved Here ---
+        # Get the platform-specific user cache directory
+        user_cache_path = platformdirs.user_cache_dir(app_name, app_author)
+
+        # Create the directory if it doesn't exist
+        os.makedirs(user_cache_path, exist_ok=True)
+
+        # Construct the full path to the cache database file
+        cache_file_path = os.path.join(user_cache_path, f"{cache_name}.sqlite")
+        logging.info(f"Using cache file at: {cache_file_path}")
+
+        # Create a CachedSession using the full path
+        self.session = requests_cache.CachedSession(
+            cache_file_path,  # Use the full path now
+            backend="sqlite",
+            expire_after=expire_after,
+        )
+        # --- End Caching Location Improvement ---
+
         self.session.headers.update({"Accept": "application/json"})
 
     def _make_request(self, endpoint: str, uniprot_id: str) -> Dict[str, Any]:
         """
-        Helper method to make a GET request to a PDBe graph API endpoint.
-
-        Args:
-            endpoint (str): The specific API endpoint path (e.g., "/mappings/best_structures").
-            uniprot_id (str): The UniProt ID to query for.
-
-        Returns:
-            Dict[str, Any]: The JSON response as a dictionary.
-
-        Raises:
-            requests.exceptions.HTTPError: If the request to PDBe fails with a client/server error.
-            requests.exceptions.RequestException: For other request-related issues (timeout, connection error).
-            ValueError: If the response is not valid JSON or the UniProt ID is not in the response.
+        Helper method to make a GET request to a PDBe graph API endpoint,
+        utilizing the cached session.
         """
         url = f"{self.PDBE_GRAPH_API_BASE_URL}{endpoint}/{uniprot_id}"
         try:
             response = self.session.get(url, timeout=self.timeout)
-            response.raise_for_status()  # Raises an HTTPError for bad responses (4XX or 5XX)
 
-            # Handle cases where API returns 200 OK with an empty body or non-JSON content
+            if getattr(response, "from_cache", False):
+                logging.info(f"Cache hit for {url}")
+            else:
+                logging.info(f"Cache miss for {url}. Fetched from API.")
+
+            response.raise_for_status()
+
             if not response.content:
-                # If UniProt ID not found, some graph endpoints return 200 OK with {"uniprot_id": []}
-                # or simply an empty dict {} for truly non-existent/malformed top-level queries.
-                # This check handles if the response is completely empty.
                 return {}
 
             data = response.json()
             return data
 
         except requests.exceptions.HTTPError as e:
-            # Specific handling for 404 could be nuanced depending on the endpoint
-            # For graph API, a 404 might mean the UniProt ID format is wrong or the base endpoint path is wrong.
-            # If the UniProt ID is valid but has no data, it often returns 200 OK with an empty list for that ID.
             logging.error(
                 f"PDBe API request failed for {url} with status {response.status_code}: {e}"
             )
             raise
         except requests.exceptions.JSONDecodeError:
+            cached = " (cached)" if getattr(response, "from_cache", False) else ""
             logging.error(
-                f"Failed to decode JSON from {url}. Response text: {response.text[:200]}..."
+                f"Failed to decode JSON from {url}{cached}. Response text: {response.text[:200]}..."
             )
             raise ValueError(
                 f"Invalid JSON response from PDBe API for {uniprot_id} at {endpoint}."
@@ -229,76 +253,90 @@ class PDBeClient:
         )
         return processed_interactions
 
+    def clear_cache(self):
+        """Clears the entire requests cache."""
+        logging.info("Clearing PDBe API cache...")
+        self.session.cache.clear()
+        logging.info("Cache cleared.")
+
 
 if __name__ == "__main__":
     client = PDBeClient()  # Create an instance of the client
 
-    # --- Test get_pdb_coverage ---
-    print("--- Testing PDB Coverage ---")
+    # Optionally clear cache before starting a fresh test run
+    # client.clear_cache()
+
+    # Define the IDs to test
     uniprot_id_with_coverage = "P07550"  # TGF-beta receptor type-1
-    print(f"\nFetching PDB coverage for {uniprot_id_with_coverage}...")
+    uniprot_id_without_coverage = "A0A023GPI8"  # Might have no "best_structures"
+    uniprot_id_with_ligands = "P00533"  # EGFR
+    uniprot_id_few_ligands = "P07550"  # Same as with_coverage
+    uniprot_id_no_ligands_expected = "A0A023GPI8"  # Same as without_coverage
+
+    print("=" * 30)
+    print("      FIRST RUN (Populating Cache)     ")
+    print("=" * 30)
+
+    # --- Test PDB Coverage (Run 1) ---
+    print("\n--- Testing PDB Coverage (Run 1) ---")
+    print(f"Fetching PDB coverage for {uniprot_id_with_coverage}...")
+    client.get_pdb_coverage(uniprot_id_with_coverage)
+    print(f"Fetching PDB coverage for {uniprot_id_without_coverage}...")
+    client.get_pdb_coverage(uniprot_id_without_coverage)
+
+    # --- Test Ligand Interactions (Run 1) ---
+    print("\n--- Testing Ligand Interactions (Run 1) ---")
+    print(f"Fetching ligand interactions for {uniprot_id_with_ligands}...")
+    client.get_pdb_ligand_interactions(uniprot_id_with_ligands)
+    print(f"Fetching ligand interactions for {uniprot_id_few_ligands}...")
+    client.get_pdb_ligand_interactions(uniprot_id_few_ligands)
+    print(f"Fetching ligand interactions for {uniprot_id_no_ligands_expected}...")
+    client.get_pdb_ligand_interactions(uniprot_id_no_ligands_expected)
+
+    print("\n\n")
+    print("=" * 30)
+    print("      SECOND RUN (Testing Cache)       ")
+    print("=" * 30)
+
+    # --- Test PDB Coverage (Run 2 - Should Hit Cache) ---
+    print("\n--- Testing PDB Coverage (Run 2) ---")
+    print(f"Fetching PDB coverage for {uniprot_id_with_coverage}...")
     coverage_data = client.get_pdb_coverage(uniprot_id_with_coverage)
     if coverage_data:
-        print(f"Found {len(coverage_data)} PDB entries for {uniprot_id_with_coverage}:")
-        for entry in coverage_data[:3]:  # Print first 3
-            print(
-                f"  PDB: {entry['pdb_id']}, UniProt Range: {entry['unp_start']}-{entry['unp_end']}"
-            )
+        print(f"Found {len(coverage_data)} PDB entries.")
     else:
-        print(f"No PDB coverage found for {uniprot_id_with_coverage}.")
+        print("No PDB coverage found.")
 
-    uniprot_id_without_coverage = "A0A023GPI8"  # Might have no "best_structures"
     print(f"\nFetching PDB coverage for {uniprot_id_without_coverage}...")
     coverage_data_none = client.get_pdb_coverage(uniprot_id_without_coverage)
     if coverage_data_none:
-        print(
-            f"Found {len(coverage_data_none)} PDB entries for {uniprot_id_without_coverage}."
-        )
+        print(f"Found {len(coverage_data_none)} PDB entries.")
     else:
-        print(f"No PDB coverage found for {uniprot_id_without_coverage}.")
+        print("No PDB coverage found.")
 
-    # --- Test get_pdb_ligand_interactions ---
-    print("\n--- Testing Ligand Interactions ---")
-    uniprot_id_with_ligands = "P00533"  # EGFR, known to have many PDBs with ligands
-    print(f"\nFetching ligand interactions for {uniprot_id_with_ligands}...")
+    # --- Test Ligand Interactions (Run 2 - Should Hit Cache) ---
+    print("\n--- Testing Ligand Interactions (Run 2) ---")
+    print(f"Fetching ligand interactions for {uniprot_id_with_ligands}...")
     ligand_data = client.get_pdb_ligand_interactions(uniprot_id_with_ligands)
     if ligand_data:
-        print(
-            f"Found {len(ligand_data)} ligand interaction contexts for {uniprot_id_with_ligands}:"
-        )
-        for interaction in ligand_data[:3]:  # Print first 3 contexts
-            print(f"  PDB: {interaction['pdb_id']}, Ligand: {interaction['ligand_id']}")
-            print(
-                f"    Interacting UniProt Residues: {interaction['binding_site_uniprot_residues'][:5]}..."
-            )  # First 5 residues
-            # print(f"    Detailed Residues: {interaction['interacting_residues_details'][:2]}") # First 2 detailed
+        print(f"Found {len(ligand_data)} ligand contexts.")
     else:
-        print(f"No ligand interactions found for {uniprot_id_with_ligands}.")
+        print("No ligand interactions found.")
 
-    uniprot_id_few_ligands = (
-        "P07550"  # Check TGF-beta receptor type-1 again for ligands
-    )
     print(f"\nFetching ligand interactions for {uniprot_id_few_ligands}...")
     ligand_data_tgf = client.get_pdb_ligand_interactions(uniprot_id_few_ligands)
     if ligand_data_tgf:
-        print(
-            f"Found {len(ligand_data_tgf)} ligand interaction contexts for {uniprot_id_few_ligands}:"
-        )
-        for interaction in ligand_data_tgf:
-            print(f"  PDB: {interaction['pdb_id']}, Ligand: {interaction['ligand_id']}")
-            print(
-                f"    Interacting UniProt Residues: {interaction['binding_site_uniprot_residues']}"
-            )
+        print(f"Found {len(ligand_data_tgf)} ligand contexts.")
     else:
-        print(f"No ligand interactions found for {uniprot_id_few_ligands}.")
+        print("No ligand interactions found.")
 
-    # Test with an ID that might not have ligand data from this specific endpoint
-    uniprot_id_no_ligands_expected = "A0A023GPI8"
     print(f"\nFetching ligand interactions for {uniprot_id_no_ligands_expected}...")
     ligand_data_none = client.get_pdb_ligand_interactions(
         uniprot_id_no_ligands_expected
     )
     if not ligand_data_none:
-        print(
-            f"No ligand interactions found for {uniprot_id_no_ligands_expected} (as expected or API has no data)."
-        )
+        print("No ligand interactions found.")
+    else:
+        print(f"Found {len(ligand_data_none)} ligand contexts.")
+
+    print("\n--- Cache Test Complete ---")

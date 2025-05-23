@@ -119,7 +119,8 @@ def main():
                 pfam_track_full,
                 ptms_track,
             ],
-            figure_width=8,
+            figure_width=12,
+            figure_height=5,
             save_option=True,
         )
 
