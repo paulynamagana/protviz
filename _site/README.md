@@ -1,0 +1,1 @@
+[![pages-build-deployment](https://github.com/paulynamagana/protviz/actions/workflows/pages/pages-build-deployment/badge.svg)](https://github.com/paulynamagana/protviz/actions/workflows/pages/pages-build-deployment)
