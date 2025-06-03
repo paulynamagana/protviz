@@ -84,6 +84,7 @@ def main():
             label="Modifications",  # Main track label
             ann_height=0.05,  # Height for the single row of PTMs
             show_row_labels=True,
+            show_ann_labels=True,
             padding=0.05,
         )
 

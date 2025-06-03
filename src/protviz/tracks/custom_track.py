@@ -29,7 +29,7 @@ class CustomTrack(BaseTrack):
     def __init__(
         self,
         annotation_data: List[Dict[str, Any]],
-        label: str = "Custom Data",  # Main label for the entire track group
+        label: str = "",  # Main label for the entire track group
         show_row_labels: bool = True,
         default_row_label: str = "",  # Default if 'row_label' is missing, effectively no row label
         ann_height: float = 0.1,  # Height of each annotation's lane
