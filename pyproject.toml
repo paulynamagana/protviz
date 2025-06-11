@@ -47,7 +47,8 @@ dev = [
     "ruff",
     "pytest-mock",
     "pre-commit",
-    "deptry>=0.16.0"
+    "deptry>=0.16.0",
+    "requests-mock>=1.9.3",
 ]
 
 # Ruff configuration

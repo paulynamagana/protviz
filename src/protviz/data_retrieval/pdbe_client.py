@@ -26,8 +26,8 @@ class PDBeClient:
         timeout: int = 10,
         cache_name: str = "pdbe_api_cache",
         expire_after: int = 86400,  # Cache expires after 1 day (86400 seconds)
-        app_name: str = "protviz",  # Your package/app name
-        app_author: str = "ProtvizTeam",  # Your team/author name
+        app_name: str = "protviz",  # package/app name
+        app_author: str = "protviz_team",  # team
     ):
         """
         Initialises the PDBeClient with caching enabled in the user cache dir.
@@ -37,12 +37,12 @@ class PDBeClient:
             cache_name (str): The base name for the cache file (e.g., 'pdbe_api_cache').
             expire_after (int): Time in seconds after which cached responses expire.
                                 Use -1 for no expiration.
-            app_name (str): The name of your application/package for platformdirs.
-            app_author (str): The author/vendor name for platformdirs.
+            app_name (str): The name of the application/package for platformdirs.
+            app_author (str): The name for platformdirs.
         """
         self.timeout = timeout
 
-        # --- Caching Location Improved Here ---
+        # --- Caching location
         # Get the platform-specific user cache directory
         user_cache_path = platformdirs.user_cache_dir(app_name, app_author)
 

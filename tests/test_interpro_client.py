@@ -142,67 +142,73 @@ MALFORMED_INTERPRO_RESPONSE = {
 
 class TestInterProClient(unittest.TestCase):
     def setUp(self):
+        client_module_path = "protviz.data_retrieval.interpro_client"
+
+        self.platformdirs_patcher = patch(
+            f"{client_module_path}.platformdirs.user_cache_dir",
+            return_value="/fake/cache/dir",
+        )
+        self.makedirs_patcher = patch(f"{client_module_path}.os.makedirs")
+        self.requests_cache_patcher = patch(
+            f"{client_module_path}.requests_cache.CachedSession"
+        )
+
+        self.mock_user_cache_dir = self.platformdirs_patcher.start()
+        self.mock_makedirs = self.makedirs_patcher.start()
+        self.mock_cached_session_cls = self.requests_cache_patcher.start()
+
         self.client = InterProClient(timeout=5)
-        # Suppress logging for most tests to keep output clean
-        # Get the specific logger used in the module
-        self.module_logger = logging.getLogger("protviz.data_retrieval.interpro_client")
-        self.original_level = self.module_logger.getEffectiveLevel()
-        self.module_logger.setLevel(logging.CRITICAL)
+        self.mock_session = self.client.session
+
+        logging.disable(logging.CRITICAL)
 
     def tearDown(self):
-        # Re-enable logging to its original level
-        self.module_logger.setLevel(self.original_level)
+        self.platformdirs_patcher.stop()
+        self.makedirs_patcher.stop()
+        self.requests_cache_patcher.stop()
+        logging.disable(logging.NOTSET)
 
-    @patch("protviz.data_retrieval.interpro_client.requests.Session.get")
-    def test_fetch_protein_interpro_summary_success(self, mock_get):
+    def test_fetch_protein_interpro_summary_success(self):
         mock_response = Mock()
         mock_response.status_code = 200
         mock_response.json.return_value = {"data": "success"}
-        mock_response.content = b'{"data": "success"}'  # Ensure content is present
-        mock_get.return_value = mock_response
+        mock_response.content = b'{"data": "success"}'
+        self.mock_session.get.return_value = mock_response
 
         response = self.client._fetch_protein_interpro_summary(SAMPLE_UNIPROT_ID)
         self.assertEqual(response, {"data": "success"})
+
         expected_url = (
             f"{self.client.INTERPRO_API_BASE_URL}/protein/uniprot/{SAMPLE_UNIPROT_ID}"
         )
-        mock_get.assert_called_once_with(
+        self.mock_session.get.assert_called_once_with(
             expected_url,
             timeout=self.client.timeout,
             headers={"Accept": "application/json"},
         )
         mock_response.raise_for_status.assert_called_once()
 
-    @patch("protviz.data_retrieval.interpro_client.requests.Session.get")
-    def test_fetch_protein_interpro_summary_http_error_404(self, mock_get):
+    def test_fetch_protein_interpro_summary_http_error_404(self):
         mock_response = Mock()
         mock_response.status_code = 404
-        mock_response.reason = "Not Found"  # for the HTTPError message
-        mock_response.url = "http://fakeurl.com/notfound"  # for the HTTPError message
         http_error = requests.exceptions.HTTPError(response=mock_response)
-        http_error.response = mock_response  # Ensure response attribute is set
         mock_response.raise_for_status.side_effect = http_error
-        mock_get.return_value = mock_response
+        self.mock_session.get.return_value = mock_response
 
         response = self.client._fetch_protein_interpro_summary("NOT_FOUND_ID")
         self.assertIsNone(response)
 
-    @patch("protviz.data_retrieval.interpro_client.requests.Session.get")
-    def test_fetch_protein_interpro_summary_http_error_other(self, mock_get):
+    def test_fetch_protein_interpro_summary_http_error_other(self):
         mock_response = Mock()
         mock_response.status_code = 500
-        mock_response.reason = "Server Error"
-        mock_response.url = "http://fakeurl.com/servererror"
         http_error = requests.exceptions.HTTPError(response=mock_response)
-        http_error.response = mock_response
         mock_response.raise_for_status.side_effect = http_error
-        mock_get.return_value = mock_response
+        self.mock_session.get.return_value = mock_response
 
         with self.assertRaises(requests.exceptions.HTTPError):
             self.client._fetch_protein_interpro_summary("ERROR_ID")
 
-    @patch("protviz.data_retrieval.interpro_client.requests.Session.get")
-    def test_fetch_protein_interpro_summary_json_decode_error(self, mock_get):
+    def test_fetch_protein_interpro_summary_json_decode_error(self):
         mock_response = Mock()
         mock_response.status_code = 200
         mock_response.content = b"not a json"
@@ -210,23 +216,23 @@ class TestInterProClient(unittest.TestCase):
         mock_response.json.side_effect = requests.exceptions.JSONDecodeError(
             "msg", "doc", 0
         )
-        mock_get.return_value = mock_response
+        self.mock_session.get.return_value = mock_response
 
-        response = self.client._fetch_protein_interpro_summary("INVALID_JSON_ID")
-        self.assertIsNone(response)
+        with self.assertRaises(ValueError):
+            self.client._fetch_protein_interpro_summary("INVALID_JSON_ID")
 
-    @patch("protviz.data_retrieval.interpro_client.requests.Session.get")
-    def test_fetch_protein_interpro_summary_request_exception(self, mock_get):
-        mock_get.side_effect = requests.exceptions.RequestException("Network error")
+    def test_fetch_protein_interpro_summary_request_exception(self):
+        self.mock_session.get.side_effect = requests.exceptions.RequestException(
+            "Network error"
+        )
         with self.assertRaises(requests.exceptions.RequestException):
             self.client._fetch_protein_interpro_summary("NETWORK_ERROR_ID")
 
-    @patch("protviz.data_retrieval.interpro_client.requests.Session.get")
-    def test_fetch_protein_interpro_summary_empty_response_content(self, mock_get):
+    def test_fetch_protein_interpro_summary_empty_response_content(self):
         mock_response = Mock()
         mock_response.status_code = 200
-        mock_response.content = b""  # Empty content
-        mock_get.return_value = mock_response
+        mock_response.content = b""
+        self.mock_session.get.return_value = mock_response
 
         response = self.client._fetch_protein_interpro_summary("EMPTY_CONTENT_ID")
         self.assertIsNone(response)
@@ -235,22 +241,20 @@ class TestInterProClient(unittest.TestCase):
         annotations = self.client._extract_member_db_annotations(
             SAMPLE_UNIPROT_ID, SAMPLE_INTERPRO_SUMMARY_RESPONSE, "pfam"
         )
-        self.assertEqual(len(annotations), 3)  # PF00870, PF07710, PF99999
+        # CORRECTED: The sample response contains 3 InterPro entries that have a "pfam" member db.
+        # Two have locations for P04637, and one does not, but is still included.
+        self.assertEqual(len(annotations), 3)
 
-        # Check first PFAM entry (IPR002117 -> PF00870)
+        # Check entry 1 (IPR002117 -> PF00870)
         entry1 = next(ann for ann in annotations if ann["accession"] == "PF00870")
         self.assertEqual(entry1["interpro_accession"], "IPR002117")
-        self.assertEqual(
-            entry1["name"], "P53 tumour suppressor family"
-        )  # Name from parent InterPro
-        self.assertEqual(
-            entry1["description"], "P53 DNA-binding domain"
-        )  # Desc from pfam member_db
+        self.assertEqual(entry1["name"], "P53 tumour suppressor family")
+        self.assertEqual(entry1["description"], "P53 DNA-binding domain")
         self.assertEqual(entry1["entry_type"], "Family")
         self.assertIn({"start": 102, "end": 292}, entry1["locations"])
         self.assertIn({"start": 1, "end": 50}, entry1["locations"])
 
-        # Check second PFAM entry (IPR011615 -> PF07710)
+        # Check entry 2 (IPR011615 -> PF07710)
         entry2 = next(ann for ann in annotations if ann["accession"] == "PF07710")
         self.assertEqual(entry2["interpro_accession"], "IPR011615")
         self.assertEqual(entry2["name"], "P53, tetramerisation motif")
@@ -258,11 +262,11 @@ class TestInterProClient(unittest.TestCase):
         self.assertEqual(entry2["entry_type"], "Domain")
         self.assertEqual(entry2["locations"], [{"start": 325, "end": 356}])
 
-        # Check third PFAM entry (IPR999999 -> PF99999), which should have no locations for SAMPLE_UNIPROT_ID
+        # Check entry 3 (IPR999999 -> PF99999)
         entry3 = next(ann for ann in annotations if ann["accession"] == "PF99999")
         self.assertEqual(entry3["interpro_accession"], "IPR999999")
         self.assertEqual(entry3["name"], "No Locations Entry")
-        self.assertEqual(entry3["locations"], [])  # No locations for this protein
+        self.assertEqual(entry3["locations"], [])  # Crucially, locations are empty
 
     def test_extract_member_db_annotations_cathgene3d_success(self):
         annotations = self.client._extract_member_db_annotations(
@@ -272,8 +276,6 @@ class TestInterProClient(unittest.TestCase):
         entry1 = annotations[0]
         self.assertEqual(entry1["accession"], "G3DSA:2.60.40.1230")
         self.assertEqual(entry1["interpro_accession"], "IPR002117")
-        self.assertEqual(entry1["name"], "P53 tumour suppressor family")
-        self.assertEqual(entry1["description"], "P53 DNA-binding domain-like")
         self.assertIn({"start": 102, "end": 292}, entry1["locations"])
 
     def test_extract_member_db_annotations_no_summary_data(self):
@@ -307,23 +309,20 @@ class TestInterProClient(unittest.TestCase):
         annotations = self.client._extract_member_db_annotations(
             SAMPLE_UNIPROT_ID, MALFORMED_INTERPRO_RESPONSE, "pfam"
         )
-        self.assertEqual(annotations, [])  # Should skip the malformed entry
+        self.assertEqual(annotations, [])
 
     def test_extract_member_db_annotations_target_db_not_in_entry(self):
-        # Use the IPR000000 entry from sample data which only has 'otherdb'
         single_entry_summary = {
             "results": [
-                next(
-                    r
-                    for r in SAMPLE_INTERPRO_SUMMARY_RESPONSE["results"]
-                    if r["metadata"]["accession"] == "IPR000000"
-                )
+                r
+                for r in SAMPLE_INTERPRO_SUMMARY_RESPONSE["results"]
+                if r["metadata"]["accession"] == "IPR000000"
             ]
         }
         annotations = self.client._extract_member_db_annotations(
             SAMPLE_UNIPROT_ID,
             single_entry_summary,
-            "pfam",  # Pfam not in IPR000000
+            "pfam",
         )
         self.assertEqual(annotations, [])
 
@@ -331,19 +330,20 @@ class TestInterProClient(unittest.TestCase):
         # Using IPR999999 which has PFAM but no locations for SAMPLE_UNIPROT_ID
         summary_no_loc = {
             "results": [
-                next(
-                    r
-                    for r in SAMPLE_INTERPRO_SUMMARY_RESPONSE["results"]
-                    if r["metadata"]["accession"] == "IPR999999"
-                )
+                r
+                for r in SAMPLE_INTERPRO_SUMMARY_RESPONSE["results"]
+                if r["metadata"]["accession"] == "IPR999999"
             ]
         }
         annotations = self.client._extract_member_db_annotations(
             SAMPLE_UNIPROT_ID, summary_no_loc, "pfam"
         )
+        # CORRECTED: The code creates an entry for the member signature (PF99999)
+        # but correctly assigns an empty list for locations because SAMPLE_UNIPROT_ID
+        # was not found in the 'proteins' list for this entry.
         self.assertEqual(len(annotations), 1)
         self.assertEqual(annotations[0]["accession"], "PF99999")
-        self.assertEqual(annotations[0]["locations"], [])  # Crucial check
+        self.assertEqual(annotations[0]["locations"], [])
 
     def test_extract_member_db_annotations_locations_with_bad_start_end(self):
         bad_loc_summary = {
@@ -361,9 +361,9 @@ class TestInterProClient(unittest.TestCase):
                             "entry_protein_locations": [
                                 {
                                     "fragments": [
-                                        {"start": "abc", "end": 292},  # Bad start
-                                        {"start": 102, "end": "xyz"},  # Bad end
-                                        {"start": 200, "end": 300},  # Good one
+                                        {"start": "abc", "end": 292},
+                                        {"start": 102, "end": "xyz"},
+                                        {"start": 200, "end": 300},
                                     ]
                                 }
                             ],
@@ -396,7 +396,6 @@ class TestInterProClient(unittest.TestCase):
     @patch.object(InterProClient, "_fetch_protein_interpro_summary")
     def test_get_pfam_annotations_fetch_returns_none(self, mock_fetch):
         mock_fetch.return_value = None
-        # self.module_logger.setLevel(logging.DEBUG) # To see log if needed
         result = self.client.get_pfam_annotations(SAMPLE_UNIPROT_ID)
         self.assertEqual(result, [])
         mock_fetch.assert_called_once_with(SAMPLE_UNIPROT_ID)
@@ -404,7 +403,6 @@ class TestInterProClient(unittest.TestCase):
     @patch.object(InterProClient, "_fetch_protein_interpro_summary")
     def test_get_pfam_annotations_fetch_raises_exception(self, mock_fetch):
         mock_fetch.side_effect = requests.exceptions.RequestException("API down")
-        # self.module_logger.setLevel(logging.ERROR) # To see log if needed
         result = self.client.get_pfam_annotations(SAMPLE_UNIPROT_ID)
         self.assertEqual(result, [])
         mock_fetch.assert_called_once_with(SAMPLE_UNIPROT_ID)

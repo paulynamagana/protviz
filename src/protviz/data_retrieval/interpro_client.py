@@ -1,11 +1,16 @@
 # src/protviz/data_retrieval/interpro_client.py
 import logging
+import os
 from typing import Any, Dict, List, Optional
 
+import platformdirs
 import requests
+import requests_cache
 
-# Set up logging for this module
-logger = logging.getLogger(__name__)
+# Set up logging
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+)
 
 
 class InterProClient:
@@ -18,7 +23,14 @@ class InterProClient:
     # matches the user-provided API call structure.
     INTERPRO_API_BASE_URL = "https://www.ebi.ac.uk/interpro/api/entry/interpro"
 
-    def __init__(self, timeout: int = 20):
+    def __init__(
+        self,
+        timeout: int = 20,
+        cache_name: str = "interpro_api_cache",
+        expire_after: int = 86400,  # Cache expires after 1 day (86400 seconds)
+        app_name: str = "protviz",
+        app_author: str = "protviz_team",
+    ):
         """
         Initialize the InterProClient.
 
@@ -26,7 +38,23 @@ class InterProClient:
             timeout (int): Default timeout for API requests in seconds.
         """
         self.timeout = timeout
-        self.session = requests.Session()
+
+        # --- Caching location
+        # Get the platform-specific user cache directory
+        user_cache_path = platformdirs.user_cache_dir(app_name, app_author)
+
+        # Create the cache directory if it doesn't exist
+        os.makedirs(user_cache_path, exist_ok=True)
+
+        # Construct the full path to the cache database file
+        cache_file_path = os.path.join(user_cache_path, f"{cache_name}.sqlite")
+        logging.info(f"Using cache file at: {cache_file_path}")
+
+        self.session = requests_cache.CachedSession(
+            cache_file_path, backend="sqlite", expire_after=expire_after
+        )
+
+        self.session.headers.update({"Accept": "application/json"})
 
     def _fetch_protein_interpro_summary(
         self, uniprot_id: str
@@ -50,37 +78,48 @@ class InterProClient:
         # forms: https://www.ebi.ac.uk/interpro/api/entry/interpro/protein/uniprot/{uniprot_id}
         endpoint_path = "protein/uniprot"
         url = f"{self.INTERPRO_API_BASE_URL}/{endpoint_path}/{uniprot_id}"
-        logger.debug(f"Making InterPro API request to: {url}")
+        logging.debug(f"Making InterPro API request to: {url}")
 
         try:
             response = self.session.get(
                 url, timeout=self.timeout, headers={"Accept": "application/json"}
             )
+
+            if getattr(response, "from_cache", False):
+                logging.info(f"Using cached response for {url}")
+            else:
+                logging.info(f"Making API request to {url}")
+
             response.raise_for_status()  # Raises an HTTPError for bad responses
 
             if not response.content:
-                logger.warning(f"Empty response content from {url}")
+                logging.warning(f"Empty response content from {url}")
                 return None
 
             return response.json()
 
         except requests.exceptions.HTTPError as e:
-            logger.error(
+            logging.error(
                 f"InterPro API HTTPError for {url}: {e} (Status: {e.response.status_code if e.response else 'N/A'})"
             )
             if e.response is not None and e.response.status_code == 404:
-                logger.info(
+                logging.info(
                     f"Resource not found (404) at {url} for UniProt ID {uniprot_id}"
                 )
                 return None
-            raise  # Re-raise other HTTP errors
-        except requests.exceptions.JSONDecodeError as e:
-            logger.error(
-                f"InterPro API JSONDecodeError for {url}: {e}. Response text: {response.text[:200]}"
+            raise
+
+        except requests.exceptions.JSONDecodeError:
+            cached = " (cached)" if getattr(response, "from_cache", False) else ""
+            logging.error(
+                f"InterPro API JSONDecodeError for {url}{cached} Response text: {response.text[:200]}"
             )
-            return None
+            raise ValueError(
+                f"Invalid JSON response for {uniprot_id} at {endpoint_path}"
+            )
+
         except requests.exceptions.RequestException as e:
-            logger.error(f"InterPro API RequestException for {url}: {e}")
+            logging.error(f"InterPro API RequestException for {url}: {e}")
             raise
 
     def _extract_member_db_annotations(
@@ -94,10 +133,9 @@ class InterProClient:
         from the general InterPro protein summary response.
 
         Args:
-            uniprot_id (str): The UniProt ID queried.
-            interpro_summary_data (Optional[Dict[str, Any]]): The parsed JSON response from
-                                                             _fetch_protein_interpro_summary.
-            member_db_key (str): The key for the member database (e.g., "pfam", "cathgene3d").
+        uniprot_id (str): The UniProt ID queried.
+        interpro_summary_data (Optional[Dict[str, Any]]): The parsed JSON response from_fetch_protein_interpro_summary.
+        member_db_key (str): The key for the member database (e.g., "pfam", "cathgene3d").
 
         Returns:
             List[Dict[str, Any]]: A list of processed annotations from the specified member database.
@@ -105,7 +143,7 @@ class InterProClient:
         if not interpro_summary_data or not isinstance(
             interpro_summary_data.get("results"), list
         ):
-            logger.warning(
+            logging.warning(
                 f"No 'results' found or invalid format in InterPro summary for {uniprot_id}."
             )
             return []
@@ -162,12 +200,12 @@ class InterProClient:
                                                     }
                                                 )
                                             except ValueError:
-                                                logger.warning(
+                                                logging.warning(
                                                     f"Invalid start/end for fragment in {parent_interpro_acc} for {uniprot_id}"
                                                 )
 
                 if not entry_locations_on_protein:
-                    logger.debug(
+                    logging.debug(
                         f"No locations found for InterPro entry {parent_interpro_acc} on protein {uniprot_id}."
                     )
                     # If InterPro entry has no locations, its member db signatures here also have no locations
@@ -186,10 +224,10 @@ class InterProClient:
                         }
                     )
 
-        logger.info(
+        logging.info(
             f"Extracted {len(annotations_list)} {member_db_key} annotations for {uniprot_id} from InterPro summary."
         )
-        logger.info(f"Annotations: {annotations_list}")
+        logging.debug(f"Extracted annotations for {uniprot_id}: {annotations_list}")
         return annotations_list
 
     def get_pfam_annotations(self, uniprot_id: str) -> List[Dict[str, Any]]:
@@ -206,7 +244,7 @@ class InterProClient:
         try:
             interpro_summary_data = self._fetch_protein_interpro_summary(uniprot_id)
         except (requests.exceptions.RequestException, ValueError) as e:
-            logger.error(
+            logging.error(
                 f"Could not fetch InterPro summary for Pfam extraction ({uniprot_id}): {e}"
             )
             return []
@@ -229,7 +267,7 @@ class InterProClient:
         try:
             interpro_summary_data = self._fetch_protein_interpro_summary(uniprot_id)
         except (requests.exceptions.RequestException, ValueError) as e:
-            logger.error(
+            logging.error(
                 f"Could not fetch InterPro summary for CATH-Gene3D extraction ({uniprot_id}): {e}"
             )
             return []
@@ -294,5 +332,49 @@ if __name__ == "__main__":
         print(
             f"Found {len(pfam_data_none)} Pfam domain entries for {test_uniprot_id_no_data} (unexpected)."
         )
+
+    print("\nInterProClient tests completed.")
+
+
+if __name__ == "__main__":
+    # UPDATED: Test block to demonstrate caching of the single, large API call.
+    client = InterProClient(timeout=30)
+    test_id_found = "P04637"  # p53
+    test_id_not_found = "A0A000"
+
+    # --- RUN 1: This will populate the cache. ---
+    print("\n" + "=" * 40)
+    print("      RUN 1: POPULATING CACHE")
+    print("=" * 40)
+
+    print(f"\n[1] Fetching Pfam annotations for {test_id_found}...")
+    print("    (Expect 1 cache miss for the main InterPro data)")
+    pfam_data_1 = client.get_pfam_annotations(test_id_found)
+    if pfam_data_1:
+        print(f"    -> Found {len(pfam_data_1)} Pfam-related entries.")
+
+    print(f"\n[1] Fetching CATH-Gene3D annotations for {test_id_found}...")
+    print(
+        "    (Expect 1 cache HIT, as the underlying API call is identical and was cached)"
+    )
+    cath_data_1 = client.get_cathgene3d_annotations(test_id_found)
+    if cath_data_1:
+        print(f"    -> Found {len(cath_data_1)} CATH-Gene3D-related entries.")
+
+    # --- RUN 2: This should hit the cache for all network requests ---
+    print("\n\n" + "=" * 40)
+    print("      RUN 2: HITTING CACHE")
+    print("=" * 40)
+
+    print(f"\n[2] Fetching Pfam annotations for {test_id_found} again...")
+    print("    (Expect 1 cache hit)")
+    client.get_pfam_annotations(test_id_found)
+
+    print(f"\n[2] Fetching CATH-Gene3D for {test_id_found} again...")
+    print("    (Expect 1 cache hit)")
+    client.get_cathgene3d_annotations(test_id_found)
+
+    print(f"\n[2] Fetching data for invalid ID {test_id_not_found}...")
+    client.get_pfam_annotations(test_id_not_found)
 
     print("\nInterProClient tests completed.")

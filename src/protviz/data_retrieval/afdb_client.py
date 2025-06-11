@@ -2,10 +2,13 @@
 import csv
 import io
 import logging
+import os
 from typing import Any, Dict, List, Optional
 
 import gemmi
+import platformdirs
 import requests
+import requests_cache
 
 # set up logging
 logging.basicConfig(
@@ -21,14 +24,42 @@ class AFDBClient:
 
     AFDB_API_BASE_URL = "https://alphafold.ebi.ac.uk/api"
 
-    def __init__(self, timeout: int = 20):
+    def __init__(
+        self,
+        timeout: int = 20,
+        cache_name: str = "afdb_api_cache",
+        expire_after: int = 86400,  # Cache expires after 1 day (86400 seconds)
+        app_name: str = "protviz",
+        app_author: str = "protviz_team",
+    ):
         """
         Initialize the AFDB client.
         Args:
             timeout (int): Default timeout for API requests in seconds.
+            cache_name (str): The base name for the cache file (e.g., 'pdbe_api_cache').
+            expire_after (int): Time in seconds after which cached responses expire.
+                                Use -1 for no expiration.
+            app_name (str): The name of the application/package for platformdirs.
+            app_author (str): The name for platformdirs.
         """
         self.timeout = timeout
-        self.session = requests.Session()
+
+        # --- Caching location
+        # Get the platform-specific user cache directory
+        user_cache_path = platformdirs.user_cache_dir(app_name, app_author)
+
+        # Create the cache directory if it doesn't exist
+        os.makedirs(user_cache_path, exist_ok=True)
+
+        # Construct the full cache file path
+        cache_file_path = os.path.join(user_cache_path, f"{cache_name}.sqlite")
+        logging.info(f"Using cache file at: {cache_file_path}")
+
+        self.session = requests_cache.CachedSession(
+            cache_file_path, backend="sqlite", expire_after=expire_after
+        )
+
+        self.session.headers.update({"Accept": "application/json"})
 
     def _make_api_request(self, endpoint_path: str) -> Any:
         """
@@ -52,21 +83,34 @@ class AFDBClient:
             response = self.session.get(
                 url, timeout=self.timeout, headers={"Accept": "application/json"}
             )
+
+            if getattr(response, "from_cache", False):
+                logging.info(f"Using cached response for {url}")
+            else:
+                logging.info(f"Making API request to {url}")
+
             response.raise_for_status()
+
             if not response.content:
                 logging.warning(f"Empty response content from {url}")
                 return None
+
             return response.json()
+
         except requests.exceptions.HTTPError as e:
             logging.error(
                 f"AFDB API HTTPError for {url}: {e} (Status: {e.response.status_code if e.response else 'N/A'})"
             )
             raise
-        except requests.exceptions.JSONDecodeError as e:
+        except requests.exceptions.JSONDecodeError:
+            cached = " (cached)" if getattr(response, "from_cache", False) else ""
             logging.error(
-                f"AFDB API JSONDecodeError for {url}: {e}. Response text: {response.text[:200]}"
+                f"AFDB Failed to decode JSON from {url}{cached}. Response text: {response.text[:200]}..."
             )
-            raise ValueError(f"Invalid JSON response from AFDB API at {url}.")
+            raise ValueError(
+                f"Invalid JSON response from AFDB API at {url} at {endpoint_path}"
+            )
+
         except requests.exceptions.RequestException as e:
             logging.error(f"AFDB API RequestException for {url}: {e}")
             raise
@@ -88,6 +132,12 @@ class AFDBClient:
         logging.debug(f"Fetching file from URL: {file_url}")
         try:
             response = self.session.get(file_url, timeout=self.timeout, stream=True)
+
+            if getattr(response, "from_cache", False):
+                logging.info(f"Using cached file content for {file_url}")
+            else:
+                logging.info(f"Fetching new file content from {file_url}")
+
             response.raise_for_status()
 
             content_bytes = response.content
@@ -356,55 +406,63 @@ class AFDBClient:
 
 
 if __name__ == "__main__":
-    logging.basicConfig(
-        level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-    )
+    # Updated test block to demonstrate multi-level caching
     client = AFDBClient(timeout=30)
 
-    test_uniprot_id_human = "P0DTC2"  # Spike protein (SARS-CoV-2, not human
-    test_uniprot_id_human_with_am = "Q9BYF1"  # Human protein, has AlphaMissense
+    # Use a human protein with AlphaMissense and a non-human one without
+    human_id = "Q9BYF1"  # Nociceptin receptor, has AM
+    non_human_id = "P0DTC2"  # Spike protein SARS-CoV-2
 
-    print(f"\n--- Testing get_alphafold_entry_details for {test_uniprot_id_human} ---")
-    details = client.get_alphafold_entry_details(test_uniprot_id_human)
-    if details:
-        print(f"Entry Details for {test_uniprot_id_human}:")
-        print(f"CIF URL: {details.get('cifUrl')}")
-        print(f"AlphaMissense URL: {details.get('amAnnotationsUrl')}")
-    else:
-        print(f"No entry details found for {test_uniprot_id_human}.")
+    # --- RUN 1: This will populate the cache for API calls and file downloads ---
+    print("\n" + "=" * 40)
+    print("      RUN 1: POPULATING CACHE")
+    print("=" * 40)
 
-    print(
-        f"\n--- Testing get_alphafold_data for {test_uniprot_id_human} (pLDDT only) ---"
+    print(f"\n[1] Fetching pLDDT and AlphaMissense for HUMAN ({human_id})...")
+    print("    (Expect 3 cache misses: API details, CIF download, CSV download)")
+    data_human_1 = client.get_alphafold_data(
+        human_id, requested_data_types=["plddt", "alphamissense"]
     )
-    data_plddt_only = client.get_alphafold_data(
-        test_uniprot_id_human, requested_data_types=["plddt"]
-    )
-    if "plddt" in data_plddt_only and data_plddt_only["plddt"]:
-        print(f"pLDDT scores (first 5): {data_plddt_only['plddt'][:5]}")
-        print(f"Total pLDDT scores: {len(data_plddt_only['plddt'])}")
-    else:
-        print(f"  No pLDDT data returned for {test_uniprot_id_human}.")
-
-    print(
-        f"\n--- Testing get_alphafold_data for {test_uniprot_id_human_with_am} (pLDDT and AlphaMissense) ---"
-    )
-    data_both_human = client.get_alphafold_data(
-        test_uniprot_id_human_with_am, requested_data_types=["plddt", "alphamissense"]
-    )
-
-    if data_both_human.get("plddt"):
+    if data_human_1.get("plddt"):
+        print(f"    -> Found {len(data_human_1['plddt'])} pLDDT scores.")
+    if data_human_1.get("alphamissense"):
         print(
-            f"pLDDT scores for {test_uniprot_id_human_with_am} (first 3): {data_both_human['plddt'][:3]}"
+            f"    -> Found {len(data_human_1['alphamissense'])} AlphaMissense scores."
         )
-    else:
-        print(f"No pLDDT data returned for {test_uniprot_id_human_with_am}.")
 
-    if data_both_human.get("alphamissense"):
+    print(f"\n[1] Fetching pLDDT for NON-HUMAN ({non_human_id})...")
+    print("    (Expect 2 cache misses: API details, CIF download)")
+    data_non_human_1 = client.get_alphafold_data(
+        non_human_id, requested_data_types=["plddt"]
+    )
+    if data_non_human_1.get("plddt"):
+        print(f"    -> Found {len(data_non_human_1['plddt'])} pLDDT scores.")
+
+    # --- RUN 2: This should hit the cache for all network requests ---
+    print("\n\n" + "=" * 40)
+    print("      RUN 2: HITTING CACHE")
+    print("=" * 40)
+
+    print(f"\n[2] Fetching pLDDT and AlphaMissense for HUMAN ({human_id}) again...")
+    print("    (Expect 3 cache hits: API details, CIF download, CSV download)")
+    data_human_2 = client.get_alphafold_data(
+        human_id, requested_data_types=["plddt", "alphamissense"]
+    )
+    if data_human_2.get("plddt"):
+        print(f"    -> Found {len(data_human_2['plddt'])} pLDDT scores (from cache).")
+    if data_human_2.get("alphamissense"):
         print(
-            f"AlphaMissense scores for {test_uniprot_id_human_with_am} (first 3): {data_both_human['alphamissense'][:3]}"
+            f"    -> Found {len(data_human_2['alphamissense'])} AlphaMissense scores (from cache)."
         )
-        print(f"Total AlphaMissense scores: {len(data_both_human['alphamissense'])}")
-    else:
-        print(f"No AlphaMissense data returned for {test_uniprot_id_human_with_am}.")
+
+    print(f"\n[2] Fetching pLDDT for NON-HUMAN ({non_human_id}) again...")
+    print("    (Expect 2 cache hits: API details, CIF download)")
+    data_non_human_2 = client.get_alphafold_data(
+        non_human_id, requested_data_types=["plddt"]
+    )
+    if data_non_human_2.get("plddt"):
+        print(
+            f"    -> Found {len(data_non_human_2['plddt'])} pLDDT scores (from cache)."
+        )
 
     print("\nAFDBClient tests completed.")

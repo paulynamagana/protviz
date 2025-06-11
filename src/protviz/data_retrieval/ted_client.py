@@ -1,8 +1,11 @@
 # src/protviz/data_retrieval/ted_client.py
 import logging
+import os
 from typing import Any, Dict, List
 
+import platformdirs
 import requests
+import requests_cache
 
 # Set up logging
 logging.basicConfig(
@@ -17,17 +20,43 @@ class TEDClient:
 
     TED_API_URL = "https://ted.cathdb.info/api/v1/uniprot/"
 
-    def __init__(self, timeout: int = 10):
+    def __init__(
+        self,
+        timeout: int = 10,
+        cache_name: str = "ted_api_cache",
+        expire_after: int = 86400,  # Cache expires after 1 day (86400 seconds)
+        app_name: str = "protviz",
+        app_author: str = "protviz_team",
+    ):
         """
         Initialize the TED client with a timeout for requests.
 
-        :param timeout: Timeout for requests in seconds
+        Args:
+            timeout (int): Default timeout for API requests in seconds.
+            cache_name (str): The base name for the cache file (e.g., 'pdbe_api_cache').
+            expire_after (int): Time in seconds after which cached responses expire.
+                                Use -1 for no expiration.
+            app_name (str): The name of the application/package for platformdirs.
+            app_author (str): The name for platformdirs.
         """
         self.timeout = timeout
-        self.session = requests.Session()
-        self.session.headers.update(
-            {"Accept": "application/json", "Content-Type": "application/json"}
+
+        # --- Caching location
+        # Get the platform-specific user cache directory
+        user_cache_path = platformdirs.user_cache_dir(app_name, app_author)
+
+        # Create the cache directory if it doesn't exist
+        os.makedirs(user_cache_path, exist_ok=True)
+
+        # construct the full cache file path
+        cache_file_path = os.path.join(user_cache_path, f"{cache_name}.sqlite")
+        logging.info(f"Using cache file at: {cache_file_path}")
+
+        self.session = requests_cache.CachedSession(
+            cache_file_path, backend="sqlite", expire_after=expire_after
         )
+
+        self.session.headers.update({"Accept": "application/json"})
 
     def _make_request(self, endpoint: str, uniprot_id: str) -> Dict[str, Any]:
         """
@@ -43,6 +72,12 @@ class TEDClient:
         url = f"{self.TED_API_URL}{endpoint}/{uniprot_id}"
         try:
             response = self.session.get(url, timeout=self.timeout)
+
+            if getattr(response, "from_cache", False):
+                logging.info(f"Using cached response for {url}")
+            else:
+                logging.info(f"Making API request to {url}")
+
             response.raise_for_status()
 
             if not response.content:
@@ -50,11 +85,22 @@ class TEDClient:
 
             data = response.json()
             return data
+
         except requests.exceptions.HTTPError as e:
             logging.error(
                 f"TED API request failed for {uniprot_id} with status code {response.status_code}: {e}"
             )
             raise
+
+        except requests.exceptions.JSONDecodeError:
+            cached = " (cached)" if getattr(response, "from_cache", False) else ""
+            logging.error(
+                f"TED API response for {url} is not valid JSON{cached}. Response content: {response.text[:200]}..."
+            )
+            raise ValueError(
+                f"Invalid JSON response for {uniprot_id}. Check the API or the UniProt ID."
+            )
+
         except requests.exceptions.RequestException as e:
             logging.error(f"TED API request failed for {uniprot_id}: {e}")
             raise
@@ -103,35 +149,43 @@ class TEDClient:
                     }
                 )
         if not processed_annotations:
-            logging.error(f"No valid annotations found for {uniprot_id}")
+            logging.info(f"No valid annotations found for {uniprot_id}")
             return []
         logging.info(f"TED annotations for {uniprot_id}: {processed_annotations}")
         return processed_annotations
 
 
 if __name__ == "__main__":
+    # Suggestion 3: Enhanced test block
     client = TEDClient()
+    test_id_found = "Q53XC5"  # A protein kinase with known TED domains
+    test_id_not_found = "A0A376RRE1"  # This one often doesn't have TED annotations
 
-    # --- Test the TEDClient ---
-    print("Testing TEDClient...")
-    test_uniprot_id = "P12345"  # Replace with a valid UniProt ID for testing
-    annotations = client.get_TED_annotations(test_uniprot_id)
-    if annotations:
-        print(f"TED annotations for {test_uniprot_id}:")
-        for annotation in annotations:
-            print(annotation)
-    else:
-        print(f"No TED annotations found for {test_uniprot_id}.")
-    print("TEDClient test completed.")
+    print("\n--- RUN 1: POPULATING CACHE ---")
 
-    test_uniprot_invalid_id = (
-        "INVALID_ID"  # Replace with an invalid UniProt ID for testing
-    )
-    annotations_invalid = client.get_TED_annotations(test_uniprot_invalid_id)
-    if annotations_invalid:
-        print(f"TED annotations for {test_uniprot_invalid_id}:")
-        for annotation in annotations_invalid:
-            print(annotation)
-    else:
-        print(f"No TED annotations found for {test_uniprot_invalid_id}.")
-    print("TEDClient test with invalid ID completed.")
+    # First call for an ID that should be found
+    print(f"\n[1] Fetching annotations for {test_id_found}...")
+    annotations_1 = client.get_TED_annotations(test_id_found)
+    if annotations_1:
+        print(f"Found {len(annotations_1)} annotations for {test_id_found}.")
+        print(annotations_1[0])
+
+    # First call for an ID that might not be found
+    print(f"\n[1] Fetching annotations for {test_id_not_found}...")
+    client.get_TED_annotations(test_id_not_found)
+
+    print("\n\n--- RUN 2: HITTING CACHE ---")
+
+    # Second call for the ID that was found
+    print(f"\n[2] Fetching annotations for {test_id_found} again...")
+    annotations_2 = client.get_TED_annotations(test_id_found)
+    if annotations_2:
+        print(
+            f"Found {len(annotations_2)} annotations for {test_id_found} (from cache)."
+        )
+
+    # Second call for the ID that was not found
+    print(f"\n[2] Fetching annotations for {test_id_not_found} again...")
+    client.get_TED_annotations(test_id_not_found)
+
+    print("\n--- Test complete ---")
