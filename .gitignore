@@ -178,3 +178,5 @@ cython_debug/
 
 #ignore files
 TODO.md
+src/.DS_Store
+.DS_Store

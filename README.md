@@ -4,7 +4,15 @@
 ![License](https://img.shields.io/badge/License-MIT-steelblue)
 [![Python Tests](https://github.com/paulynamagana/protviz/actions/workflows/python-tests.yml/badge.svg?branch=main)](https://github.com/paulynamagana/protviz/actions/workflows/python-tests.yml)
 
-Protviz is a Python package designed to retrieve and visualize various protein annotations and structural information. It allows users to fetch data from multiple bioinformatics databases and plot this information along a protein sequence using a flexible track-based system.
+Protviz is a Python package designed to retrieve and visualise various protein annotations and structural information. It allows users to fetch data from multiple bioinformatics databases and plot this information along a protein sequence using a flexible track-based system.
+
+## Motivation
+
+The goal of Protviz is to simplify the process of plotting protein annotations. This package is inspired by the [Gviz](https://bioconductor.org/packages/release/bioc/html/Gviz.html) library in R/Bioconductor, aiming to provide a similar, easy-to-use, track-based visualisation system for protein sequence data in Python.
+
+I also wanted a way to plot data from resources but also be able to add custom annotations. Hope its helpful.
+
+
 
 ## Features
 
@@ -14,18 +22,21 @@ Protviz is a Python package designed to retrieve and visualize various protein a
     * Get TED domain annotations from the TED database.
     * Fetch pLDDT scores and AlphaMissense data from the AlphaFold Database (AFDB).
 
-* **Track-Based Visualization**:
+* **Track-Based Visualisation**:
     * **AxisTrack**: Displays the sequence axis with tick marks.
     * **PDBTrack**: Shows PDB structure coverage, with options to display as individual entries or a collapsed overview.
-    * **LigandInteractionTrack**: Visualizes ligand binding sites on the protein.
-    * **TEDDomainsTrack**: Displays TED domain annotations.
+    * **LigandInteractionTrack**: Visualises ligand binding sites on the protein from PDB.
+    * **TEDDomainsTrack**: Displays TED  annotations.
     * **AlphaFoldTrack**: Shows AlphaFold prediction metrics like pLDDT and average AlphaMissense pathogenicity scores.
-    * **CustomTrack**: Allows plotting of arbitrary user-defined annotations (ranges or points) with customizable labels and colors.
+    * **CustomTrack**: Allows plotting of arbitrary user-defined annotations (ranges or points) with customisable labels and colors.
+    * **InterProTrack**: Displays InterPro annotations, like Pfam and CATH.
+
 
 * **Core Plotting Functionality**:
     * Combines multiple tracks into a single, coherent plot.
     * Supports zooming into specific regions of the protein sequence.
     * Option to save plots to a file.
+
 
 ## Dependencies
 
