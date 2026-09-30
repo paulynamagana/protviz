@@ -7,10 +7,7 @@ import platformdirs
 import requests
 import requests_cache
 
-# Set up logging
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-)
+logger = logging.getLogger(__name__)
 
 
 class InterProClient:
@@ -48,7 +45,7 @@ class InterProClient:
 
         # Construct the full path to the cache database file
         cache_file_path = os.path.join(user_cache_path, f"{cache_name}.sqlite")
-        logging.info(f"Using cache file at: {cache_file_path}")
+        logger.info(f"Using cache file at: {cache_file_path}")
 
         self.session = requests_cache.CachedSession(
             cache_file_path, backend="sqlite", expire_after=expire_after
@@ -78,7 +75,7 @@ class InterProClient:
         # forms: https://www.ebi.ac.uk/interpro/api/entry/interpro/protein/uniprot/{uniprot_id}
         endpoint_path = "protein/uniprot"
         url = f"{self.INTERPRO_API_BASE_URL}/{endpoint_path}/{uniprot_id}"
-        logging.debug(f"Making InterPro API request to: {url}")
+        logger.debug(f"Making InterPro API request to: {url}")
 
         try:
             response = self.session.get(
@@ -86,24 +83,24 @@ class InterProClient:
             )
 
             if getattr(response, "from_cache", False):
-                logging.info(f"Using cached response for {url}")
+                logger.info(f"Using cached response for {url}")
             else:
-                logging.info(f"Making API request to {url}")
+                logger.info(f"Making API request to {url}")
 
             response.raise_for_status()  # Raises an HTTPError for bad responses
 
             if not response.content:
-                logging.warning(f"Empty response content from {url}")
+                logger.warning(f"Empty response content from {url}")
                 return None
 
             return response.json()
 
         except requests.exceptions.HTTPError as e:
-            logging.error(
+            logger.error(
                 f"InterPro API HTTPError for {url}: {e} (Status: {e.response.status_code if e.response else 'N/A'})"
             )
             if e.response is not None and e.response.status_code == 404:
-                logging.info(
+                logger.info(
                     f"Resource not found (404) at {url} for UniProt ID {uniprot_id}"
                 )
                 return None
@@ -111,7 +108,7 @@ class InterProClient:
 
         except requests.exceptions.JSONDecodeError:
             cached = " (cached)" if getattr(response, "from_cache", False) else ""
-            logging.error(
+            logger.error(
                 f"InterPro API JSONDecodeError for {url}{cached} Response text: {response.text[:200]}"
             )
             raise ValueError(
@@ -119,7 +116,7 @@ class InterProClient:
             )
 
         except requests.exceptions.RequestException as e:
-            logging.error(f"InterPro API RequestException for {url}: {e}")
+            logger.error(f"InterPro API RequestException for {url}: {e}")
             raise
 
     def _extract_member_db_annotations(
@@ -143,7 +140,7 @@ class InterProClient:
         if not interpro_summary_data or not isinstance(
             interpro_summary_data.get("results"), list
         ):
-            logging.warning(
+            logger.warning(
                 f"No 'results' found or invalid format in InterPro summary for {uniprot_id}."
             )
             return []
@@ -200,12 +197,12 @@ class InterProClient:
                                                     }
                                                 )
                                             except ValueError:
-                                                logging.warning(
+                                                logger.warning(
                                                     f"Invalid start/end for fragment in {parent_interpro_acc} for {uniprot_id}"
                                                 )
 
                 if not entry_locations_on_protein:
-                    logging.debug(
+                    logger.debug(
                         f"No locations found for InterPro entry {parent_interpro_acc} on protein {uniprot_id}."
                     )
                     # If InterPro entry has no locations, its member db signatures here also have no locations
@@ -224,10 +221,10 @@ class InterProClient:
                         }
                     )
 
-        logging.info(
+        logger.info(
             f"Extracted {len(annotations_list)} {member_db_key} annotations for {uniprot_id} from InterPro summary."
         )
-        logging.debug(f"Extracted annotations for {uniprot_id}: {annotations_list}")
+        logger.debug(f"Extracted annotations for {uniprot_id}: {annotations_list}")
         return annotations_list
 
     def get_pfam_annotations(self, uniprot_id: str) -> List[Dict[str, Any]]:
@@ -244,7 +241,7 @@ class InterProClient:
         try:
             interpro_summary_data = self._fetch_protein_interpro_summary(uniprot_id)
         except (requests.exceptions.RequestException, ValueError) as e:
-            logging.error(
+            logger.error(
                 f"Could not fetch InterPro summary for Pfam extraction ({uniprot_id}): {e}"
             )
             return []
@@ -267,7 +264,7 @@ class InterProClient:
         try:
             interpro_summary_data = self._fetch_protein_interpro_summary(uniprot_id)
         except (requests.exceptions.RequestException, ValueError) as e:
-            logging.error(
+            logger.error(
                 f"Could not fetch InterPro summary for CATH-Gene3D extraction ({uniprot_id}): {e}"
             )
             return []

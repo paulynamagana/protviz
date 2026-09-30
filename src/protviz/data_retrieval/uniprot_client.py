@@ -18,11 +18,8 @@ requests_cache.install_cache(
     cache_file_path, backend="sqlite", expire_after=86400
 )  # 1 day expiration
 
-# Set up logging
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-)
-logging.info(f"Using UniProt cache file at: {cache_file_path}")
+logger = logging.getLogger(__name__)
+logger.info(f"Using UniProt cache file at: {cache_file_path}")
 
 
 def get_protein_sequence_length(uniprot_id: str) -> int:
@@ -48,9 +45,9 @@ def get_protein_sequence_length(uniprot_id: str) -> int:
         response = requests.get(query, headers=headers)
 
         if getattr(response, "from_cache", False):
-            logging.info(f"Using cached response for {query}")
+            logger.info(f"Using cached response for {query}")
         else:
-            logging.info(f"Making API request to {query}")
+            logger.info(f"Making API request to {query}")
 
         response.raise_for_status()  # Raise an error for bad responses
 

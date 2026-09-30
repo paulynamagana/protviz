@@ -144,6 +144,7 @@ class AlphaFoldTrack(BaseTrack):
         y_start_sub_track: float,
         view_start_aa: int,
         view_end_aa: int,
+        label: Optional[str] = None,
     ):
         """Draws the pLDDT scores as a colored bar."""
         if not self.plddt_data:
@@ -186,7 +187,7 @@ class AlphaFoldTrack(BaseTrack):
         ax.text(
             0,
             y_start_sub_track + self.sub_track_height / 2,
-            self.plddt_label,
+            label or self.plddt_label,
             ha="right",
             va="center",
             fontsize=TRACK_LABEL_FONT_SIZE - 1,
@@ -201,6 +202,7 @@ class AlphaFoldTrack(BaseTrack):
         y_start_sub_track: float,
         view_start_aa: int,
         view_end_aa: int,
+        label: Optional[str] = None,
     ):
         """Draws the average AlphaMissense pathogenicity scores."""
         if not self.avg_am_scores_per_residue:
@@ -234,7 +236,7 @@ class AlphaFoldTrack(BaseTrack):
         ax.text(
             0,
             y_start_sub_track + self.sub_track_height / 2,
-            self.alphamissense_label,
+            label or self.alphamissense_label,
             ha="right",
             va="center",
             fontsize=TRACK_LABEL_FONT_SIZE - 1,
@@ -286,12 +288,25 @@ class AlphaFoldTrack(BaseTrack):
         num_drawn_sub_tracks = 0
         y_offset_for_current_sub_track = 0
 
+        # With a single sub-track the main label would sit at exactly the same
+        # height as the sub-track label, so merge the two instead.
+        is_single_sub_track = len(self.plotting_options) == 1
+
+        def merged_label(sub_label: str) -> Optional[str]:
+            if not is_single_sub_track:
+                return None
+            return f"{self.label} {sub_label}" if self.label else sub_label
+
         if "plddt" in self.plotting_options:
             actual_sub_track_y_start = (
                 content_block_y_start + y_offset_for_current_sub_track
             )
             self._draw_plddt_sub_track(
-                ax, actual_sub_track_y_start, view_start_aa, view_end_aa
+                ax,
+                actual_sub_track_y_start,
+                view_start_aa,
+                view_end_aa,
+                label=merged_label(self.plddt_label),
             )
             y_offset_for_current_sub_track += (
                 self.sub_track_height + self.sub_track_spacing
@@ -303,13 +318,17 @@ class AlphaFoldTrack(BaseTrack):
                 content_block_y_start + y_offset_for_current_sub_track
             )
             self._draw_alphamissense_sub_track(
-                ax, actual_sub_track_y_start, view_start_aa, view_end_aa
+                ax,
+                actual_sub_track_y_start,
+                view_start_aa,
+                view_end_aa,
+                label=merged_label(self.alphamissense_label),
             )
             # y_offset_for_current_sub_track += self.sub_track_height + self.sub_track_spacing # Not needed after last
             num_drawn_sub_tracks += 1
 
         # Add the main track label if provided and if any sub-tracks were drawn
-        if self.label and num_drawn_sub_tracks > 0:
+        if self.label and num_drawn_sub_tracks > 0 and not is_single_sub_track:
             main_label_y_center = (
                 content_block_y_start + self.height / 2
             )  # Center of the whole block

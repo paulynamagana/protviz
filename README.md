@@ -38,90 +38,110 @@ I also wanted a way to plot data from resources but also be able to add custom a
     * Option to save plots to a file.
 
 
-## Dependencies
+## Installation
 
-The package requires the following Python libraries:
+You need Python 3.9 or newer. To install Protviz, open a terminal and run:
 
-* numpy>=1.20
-* matplotlib>=3.4
-* requests>=2.20
-* gemmi (for parsing CIF files from AlphaFold DB)
+```bash
+pip install git+https://github.com/paulynamagana/protviz.git
+```
 
-## Basic Usage
+## Quick start (no Python required)
 
-Here's a simple example of how to use Protviz to fetch data and plot tracks for a protein:
+Protviz comes with a `protviz` command, so you can make a figure without writing any code.
+Give it a UniProt accession and it will fetch everything it can find and save a picture:
+
+```bash
+protviz P04637
+```
+
+That saves `P04637.png` in the folder you are in. A UniProt accession looks like `P04637`
+or `Q9Y6K9` — it is not a gene name, so `TP53` will not work. You can find the accession
+for your protein by searching its name at [uniprot.org](https://www.uniprot.org) and
+copying the short code in the **Entry** column.
+
+Some other things you can do:
+
+```bash
+protviz P04637 -o my_figure.png        # choose the file name
+protviz P04637 --region 90-300         # zoom into amino acids 90 to 300
+protviz P04637 --tracks pdb,pfam       # draw only the tracks you want
+protviz P04637 --detail                # give every entry its own row
+protviz P04637 --show                  # open a window instead of saving
+protviz --list-tracks                  # see every track and what it shows
+protviz --help                         # see all the options
+```
+
+If a database is unavailable or has nothing for your protein, Protviz says so and carries
+on with the tracks it could fetch, rather than failing.
+
+### Available tracks
+
+| Track | Shows |
+| --- | --- |
+| `pdb` | Experimental structures from the PDB, as sequence coverage |
+| `ligands` | Positions where a ligand binds the protein |
+| `ted` | Structural domains predicted by TED |
+| `pfam` | Protein families and domains from Pfam |
+| `cath` | Structural domains from CATH-Gene3D |
+| `plddt` | AlphaFold per-residue confidence |
+| `alphamissense` | AlphaMissense average pathogenicity (slow — downloads a large file) |
+
+`pdb`, `ligands`, `ted`, `pfam` and `plddt` are drawn by default. Use `--tracks all` to
+include every one.
+
+## Using Protviz from Python
+
+The command line covers the common cases. Use the Python API when you want full control
+over each track, or to add your own annotations with `CustomTrack`:
 
 ```python
 from protviz import plot_protein_tracks
 from protviz.data_retrieval import get_protein_sequence_length, PDBeClient, AFDBClient
 from protviz.tracks import AxisTrack, PDBTrack, AlphaFoldTrack
 
-def main():
-    uniprot_id = "O15245"  # Example UniProt ID
+uniprot_id = "O15245"
 
-    # Initialize clients
-    pdbe_client = PDBeClient()
-    afdb_client = AFDBClient()
+# Fetch the data you want
+seq_length = get_protein_sequence_length(uniprot_id)
+pdb_coverage = PDBeClient().get_pdb_coverage(uniprot_id)
+alphafold_data = AFDBClient().get_alphafold_data(uniprot_id, requested_data_types=["plddt"])
 
-    try:
-        # Fetch sequence length
-        seq_length = get_protein_sequence_length(uniprot_id)
-        print(f"Sequence length for {uniprot_id}: {seq_length}")
+# Build one track per kind of annotation
+tracks = [
+    AxisTrack(sequence_length=seq_length, label="Sequence"),
+    PDBTrack(pdb_data=pdb_coverage, label="PDB", plotting_option="collapse"),
+    AlphaFoldTrack(afdb_data=alphafold_data, plotting_options=["plddt"]),
+]
 
-        # Fetch PDB coverage data
-        pdb_coverage = pdbe_client.get_pdb_coverage(uniprot_id)
-        print(f"Found {len(pdb_coverage)} PDB coverage entries.")
-
-        # Fetch AlphaFold data (pLDDT)
-        alphafold_data = afdb_client.get_alphafold_data(
-            uniprot_id,
-            requested_data_types=["plddt"]
-        )
-        print(f"Fetched AlphaFold data. pLDDT entries: {len(alphafold_data.get('plddt', []))}")
-
-        # Create tracks
-        axis_track = AxisTrack(sequence_length=seq_length, label="Sequence")
-
-        pdb_track_collapsed = PDBTrack(
-            pdb_data=pdb_coverage,
-            label="PDB (Collapsed)",
-            plotting_option="collapse",
-            bar_height=0.1,
-            color="darkturquoise"
-        )
-
-        alphafold_track_plddt = AlphaFoldTrack(
-            afdb_data=alphafold_data,
-            plotting_options=["plddt"],
-            main_label="AF pLDDT",
-            sub_track_height=0.2
-        )
-
-        # Plot the tracks
-        plot_protein_tracks(
-            protein_id=uniprot_id,
-            sequence_length=seq_length,
-            tracks=[axis_track, pdb_track_collapsed, alphafold_track_plddt],
-            figure_width=12,
-            save_option=True # Saves the plot as <uniprot_id>_plot.png
-        )
-
-        print(f"Plot saved as {uniprot_id}_plot.png")
-
-    except Exception as e:
-        print(f"An error occurred: {e}")
-        import traceback
-        traceback.print_exc()
-
-if __name__ == "__main__":
-    main()
+# Draw them
+plot_protein_tracks(
+    protein_id=uniprot_id,
+    sequence_length=seq_length,
+    tracks=tracks,
+    figure_width=12,
+    save_path="my_figure.png",
+    show=False,
+)
 ```
+
+`plot_protein_tracks` takes `save_path` to choose the output file and `show` to control
+whether a window opens. Use `view_start_aa` and `view_end_aa` to zoom into a region.
+
+## Dependencies
+
+These are installed automatically with the package:
+
+* numpy>=1.20
+* matplotlib>=3.4
+* requests>=2.32
+* gemmi (for parsing CIF files from AlphaFold DB)
+* requests-cache and platformdirs (for caching API responses between runs)
 
 ## Running Examples
 
-The package includes several example scripts (e.g., example_pdbe.py, example_afdb.py, example_ted.py, example_pdbe_zoom.py) in the root directory or an examples/ folder.
+The `examples/` folder contains scripts showing each data source in turn. Run one with:
 
-To run an example, navigate to the directory containing the scripts and execute it with Python:
-```python
+```bash
 python examples/example_afdb.py
 ```

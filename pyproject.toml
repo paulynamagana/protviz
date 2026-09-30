@@ -36,6 +36,9 @@ dependencies = [
 ]
 
 
+[project.scripts]
+protviz = "protviz.cli:main"
+
 [project.urls]
 Homepage = "https://github.com/paulynamagana/protviz"
 Repository = "https://github.com/paulynamagana/protviz"

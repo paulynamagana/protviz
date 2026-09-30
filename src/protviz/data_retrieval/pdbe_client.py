@@ -7,10 +7,7 @@ import platformdirs
 import requests
 import requests_cache
 
-# Set up logging
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-)
+logger = logging.getLogger(__name__)
 
 
 class PDBeClient:
@@ -51,7 +48,7 @@ class PDBeClient:
 
         # Construct the full path to the cache database file
         cache_file_path = os.path.join(user_cache_path, f"{cache_name}.sqlite")
-        logging.info(f"Using cache file at: {cache_file_path}")
+        logger.info(f"Using cache file at: {cache_file_path}")
 
         # Create a CachedSession using the full path
         self.session = requests_cache.CachedSession(
@@ -73,9 +70,9 @@ class PDBeClient:
             response = self.session.get(url, timeout=self.timeout)
 
             if getattr(response, "from_cache", False):
-                logging.info(f"Cache hit for {url}")
+                logger.info(f"Cache hit for {url}")
             else:
-                logging.info(f"Cache miss for {url}. Fetched from API.")
+                logger.info(f"Cache miss for {url}. Fetched from API.")
 
             response.raise_for_status()
 
@@ -86,20 +83,20 @@ class PDBeClient:
             return data
 
         except requests.exceptions.HTTPError as e:
-            logging.error(
+            logger.error(
                 f"PDBe API request failed for {url} with status {response.status_code}: {e}"
             )
             raise
         except requests.exceptions.JSONDecodeError:
             cached = " (cached)" if getattr(response, "from_cache", False) else ""
-            logging.error(
+            logger.error(
                 f"Failed to decode JSON from {url}{cached}. Response text: {response.text[:200]}..."
             )
             raise ValueError(
                 f"Invalid JSON response from PDBe API for {uniprot_id} at {endpoint}."
             )
         except requests.exceptions.RequestException as e:
-            logging.error(f"PDBe API request failed for {url}: {e}")
+            logger.error(f"PDBe API request failed for {url}: {e}")
             raise
 
     def get_pdb_coverage(self, uniprot_id: str) -> List[Dict[str, Any]]:
@@ -119,7 +116,7 @@ class PDBeClient:
         try:
             data = self._make_request(endpoint, uniprot_id)
         except (requests.exceptions.RequestException, ValueError) as e:
-            logging.error(f"Could not fetch PDB coverage for {uniprot_id}: {e}")
+            logger.error(f"Could not fetch PDB coverage for {uniprot_id}: {e}")
             return []  # Return empty on error to allow downstream processing
 
         if not data or uniprot_id not in data:
@@ -137,10 +134,10 @@ class PDBeClient:
                     }
                 )
             else:
-                logging.warning(
+                logger.warning(
                     f"Warning: Skipping PDB coverage entry due to missing fields for {uniprot_id}: {entry}"
                 )
-        logging.info(f"All PDB entries found for {uniprot_id}: {processed_entries}")
+        logger.info(f"All PDB entries found for {uniprot_id}: {processed_entries}")
         return processed_entries
 
     def get_pdb_ligand_interactions(self, uniprot_id: str) -> List[Dict[str, Any]]:
@@ -167,7 +164,7 @@ class PDBeClient:
             data = self._make_request(endpoint, uniprot_id)
 
         except (requests.exceptions.RequestException, ValueError) as e:
-            logging.error(f"Could not fetch ligand interactions for {uniprot_id}: {e}")
+            logger.error(f"Could not fetch ligand interactions for {uniprot_id}: {e}")
             return []
 
         if not data or uniprot_id not in data:
@@ -175,20 +172,20 @@ class PDBeClient:
 
         protein_data = data.get(uniprot_id)
         if not isinstance(protein_data, dict):
-            logging.error(
+            logger.error(
                 f"Unexpected data format for ligand interactions for {uniprot_id}: {protein_data}"
             )
             return []
 
         if protein_data.get("dataType") != "LIGAND BINDING SITES":
-            logging.error(
+            logger.error(
                 f"Unexpected data type for ligand interactions for {uniprot_id}: {protein_data.get('dataType')}"
             )
             return []
 
         ligand_interactions_raw = protein_data.get("data", [])
         if not isinstance(ligand_interactions_raw, list):
-            logging.error(f"Ligands data for {uniprot_id} is not a list")
+            logger.error(f"Ligands data for {uniprot_id} is not a list")
             return []
 
         processed_interactions = []
@@ -197,7 +194,7 @@ class PDBeClient:
             ligand_entry
         ) in ligand_interactions_raw:  # Iterating over list of PDB entries with ligands
             if not isinstance(ligand_entry, dict):
-                logging.error(
+                logger.error(
                     f"Unexpected ligand entry format for {uniprot_id}: {ligand_entry}"
                 )
                 continue
@@ -205,14 +202,14 @@ class PDBeClient:
             ligand_accession = ligand_entry.get("accession")  # Or 'chemical_name'
 
             if not ligand_accession:
-                logging.warning(
+                logger.warning(
                     f"Warning: Skipping ligand entry due to missing accession for {uniprot_id}: {ligand_entry}"
                 )
                 continue
 
             residues_raw = ligand_entry.get("residues", [])
             if not isinstance(residues_raw, list):
-                logging.error(
+                logger.error(
                     f"Unexpected residues format for {uniprot_id}: {residues_raw}"
                 )
                 continue
@@ -220,7 +217,7 @@ class PDBeClient:
             interacting_residues_details = []
             for res_info in residues_raw:
                 if not isinstance(res_info, dict):
-                    logging.error(
+                    logger.error(
                         f"Skipping invalid residue info for ligand {ligand_accession}."
                     )
                     continue
@@ -248,16 +245,16 @@ class PDBeClient:
                         "pdb_id": ligand_entry.get("pdb_id", ""),
                     }
                 )
-        logging.info(
+        logger.info(
             f"All ligand interactions found for {uniprot_id}: {processed_interactions}"
         )
         return processed_interactions
 
     def clear_cache(self):
         """Clears the entire requests cache."""
-        logging.info("Clearing PDBe API cache...")
+        logger.info("Clearing PDBe API cache...")
         self.session.cache.clear()
-        logging.info("Cache cleared.")
+        logger.info("Cache cleared.")
 
 
 if __name__ == "__main__":

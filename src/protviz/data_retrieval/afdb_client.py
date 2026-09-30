@@ -10,10 +10,7 @@ import platformdirs
 import requests
 import requests_cache
 
-# set up logging
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-)
+logger = logging.getLogger(__name__)
 
 
 class AFDBClient:
@@ -53,7 +50,7 @@ class AFDBClient:
 
         # Construct the full cache file path
         cache_file_path = os.path.join(user_cache_path, f"{cache_name}.sqlite")
-        logging.info(f"Using cache file at: {cache_file_path}")
+        logger.info(f"Using cache file at: {cache_file_path}")
 
         self.session = requests_cache.CachedSession(
             cache_file_path, backend="sqlite", expire_after=expire_after
@@ -78,33 +75,33 @@ class AFDBClient:
             ValueError: If the response is not valid JSON.
         """
         url = f"{self.AFDB_API_BASE_URL}{endpoint_path}"
-        logging.debug(f"Making AFDB API request to: {url}")
+        logger.debug(f"Making AFDB API request to: {url}")
         try:
             response = self.session.get(
                 url, timeout=self.timeout, headers={"Accept": "application/json"}
             )
 
             if getattr(response, "from_cache", False):
-                logging.info(f"Using cached response for {url}")
+                logger.info(f"Using cached response for {url}")
             else:
-                logging.info(f"Making API request to {url}")
+                logger.info(f"Making API request to {url}")
 
             response.raise_for_status()
 
             if not response.content:
-                logging.warning(f"Empty response content from {url}")
+                logger.warning(f"Empty response content from {url}")
                 return None
 
             return response.json()
 
         except requests.exceptions.HTTPError as e:
-            logging.error(
+            logger.error(
                 f"AFDB API HTTPError for {url}: {e} (Status: {e.response.status_code if e.response else 'N/A'})"
             )
             raise
         except requests.exceptions.JSONDecodeError:
             cached = " (cached)" if getattr(response, "from_cache", False) else ""
-            logging.error(
+            logger.error(
                 f"AFDB Failed to decode JSON from {url}{cached}. Response text: {response.text[:200]}..."
             )
             raise ValueError(
@@ -112,7 +109,7 @@ class AFDBClient:
             )
 
         except requests.exceptions.RequestException as e:
-            logging.error(f"AFDB API RequestException for {url}: {e}")
+            logger.error(f"AFDB API RequestException for {url}: {e}")
             raise
 
     def _fetch_file_content(self, file_url: str) -> str:
@@ -129,21 +126,21 @@ class AFDBClient:
             requests.exceptions.RequestException: If the download fails.
             IOError: If decompression fails.
         """
-        logging.debug(f"Fetching file from URL: {file_url}")
+        logger.debug(f"Fetching file from URL: {file_url}")
         try:
             response = self.session.get(file_url, timeout=self.timeout, stream=True)
 
             if getattr(response, "from_cache", False):
-                logging.info(f"Using cached file content for {file_url}")
+                logger.info(f"Using cached file content for {file_url}")
             else:
-                logging.info(f"Fetching new file content from {file_url}")
+                logger.info(f"Fetching new file content from {file_url}")
 
             response.raise_for_status()
 
             content_bytes = response.content
             return content_bytes.decode("utf-8")
         except requests.exceptions.RequestException as e:
-            logging.error(f"Failed to fetch file {file_url}: {e}")
+            logger.error(f"Failed to fetch file {file_url}: {e}")
             raise
 
     def get_alphafold_entry_details(self, uniprot_id: str) -> Optional[Dict[str, Any]]:
@@ -156,7 +153,7 @@ class AFDBClient:
             data = self._make_api_request(endpoint)
             if isinstance(data, list) and len(data) > 0:
                 entry = data[0]
-                logging.info(
+                logger.info(
                     f"Successfully fetched AlphaFold entry details for {uniprot_id}."
                 )
                 return {
@@ -171,7 +168,7 @@ class AFDBClient:
                     "taxId": entry.get("taxId"),
                 }
             else:
-                logging.warning(
+                logger.warning(
                     f"No AlphaFold prediction entries found for {uniprot_id} or unexpected format: {data}"
                 )
                 return None
@@ -184,7 +181,7 @@ class AFDBClient:
         """
         Parses pLDDT scores from CIF file content string using gemmi.
         """
-        logging.debug(f"Parsing pLDDT from CIF content for {uniprot_id}")
+        logger.debug(f"Parsing pLDDT from CIF content for {uniprot_id}")
         plddt_scores = []
         try:
             # Read the CIF content from the string
@@ -195,14 +192,14 @@ class AFDBClient:
             plddt_value_strs = block.find_values("_ma_qa_metric_local.metric_value")
 
             if not res_number_strs or not plddt_value_strs:
-                logging.warning(
+                logger.warning(
                     f"Could not find pLDDT tags or values in CIF for {uniprot_id}. "
                     f"Found {len(res_number_strs)} residue numbers and {len(plddt_value_strs)} pLDDT values."
                 )
                 return []
 
             if len(res_number_strs) != len(plddt_value_strs):
-                logging.warning(
+                logger.warning(
                     f"Mismatch in length of residue numbers ({len(res_number_strs)}) "
                     f"and pLDDT values ({len(plddt_value_strs)}) for {uniprot_id}. Cannot reliably parse."
                 )
@@ -214,25 +211,25 @@ class AFDBClient:
                         {"residue_number": int(res_num_str), "plddt": float(plddt_str)}
                     )
                 except ValueError as e_val:
-                    logging.warning(
+                    logger.warning(
                         f"Skipping pLDDT entry due to value conversion error for {uniprot_id}: "
                         f"res_num='{res_num_str}', plddt='{plddt_str}'. Error: {e_val}"
                     )
                     continue
 
             if not plddt_scores:
-                logging.warning(
+                logger.warning(
                     f"No pLDDT scores were successfully parsed from CIF for {uniprot_id}, "
                     "despite finding tags. Check data integrity or parsing logic for specific values."
                 )
 
         except Exception as e:
-            logging.error(
+            logger.error(
                 f"Generic error parsing CIF content for pLDDT (UniProt: {uniprot_id}): {e}"
             )
             return []
 
-        logging.info(
+        logger.info(
             f"Successfully parsed {len(plddt_scores)} pLDDT scores for {uniprot_id}"
         )
         return plddt_scores
@@ -241,18 +238,18 @@ class AFDBClient:
         self, csv_content: str, uniprot_id: str
     ) -> List[Dict[str, Any]]:
         """Parses AlphaMissense scores from csv file content."""
-        logging.debug(f"Parsing AlphaMissense csv content for {uniprot_id}")
+        logger.debug(f"Parsing AlphaMissense csv content for {uniprot_id}")
         am_scores = []
         try:
             f = io.StringIO(csv_content)
             reader = csv.reader(f, delimiter=",")
 
             header = next(reader)  # Read the header row
-            logging.debug(f"AlphaMissense header: {header}")
+            logger.debug(f"AlphaMissense header: {header}")
 
             expected_header_parts = ["protein_variant", "am_pathogenicity", "am_class"]
             if not all(part in header for part in expected_header_parts):
-                logging.warning(
+                logger.warning(
                     f"Unexpected AlphaMissense csv header for {uniprot_id}: {header}. Expected parts: {expected_header_parts}"
                 )
                 return []
@@ -263,7 +260,7 @@ class AFDBClient:
                 pathogenicity_idx = header.index("am_pathogenicity")
                 class_idx = header.index("am_class") if "am_class" in header else -1
             except ValueError as e_idx:
-                logging.error(
+                logger.error(
                     f"Could not find required columns in AlphaMissense header for {uniprot_id}: {e_idx}"
                 )
                 return []
@@ -274,7 +271,7 @@ class AFDBClient:
                     pathogenicity_idx,
                     (class_idx if class_idx != -1 else 0),
                 ):
-                    logging.warning(
+                    logger.warning(
                         f"Skipping malformed or short AlphaMissense row {row_num + 2} for {uniprot_id}: {row}"
                     )
                     continue
@@ -284,7 +281,7 @@ class AFDBClient:
                     if (
                         not variant_str or len(variant_str) < 3
                     ):  # Basic validation for "M1A" format
-                        logging.warning(
+                        logger.warning(
                             f"Invalid protein_variant format '{variant_str}' in row {row_num + 2} for {uniprot_id}"
                         )
                         continue
@@ -294,7 +291,7 @@ class AFDBClient:
                     res_num_str = variant_str[1:-1]
 
                     if not res_num_str.isdigit():
-                        logging.warning(
+                        logger.warning(
                             f"Non-numeric residue number in variant '{variant_str}' in row {row_num + 2} for {uniprot_id}"
                         )
                         continue
@@ -312,20 +309,20 @@ class AFDBClient:
                         }
                     )
                 except (ValueError, IndexError, TypeError) as e_parse:
-                    logging.warning(
+                    logger.warning(
                         f"Could not parse variant string or data in row {row_num + 2} ('{variant_str}') for {uniprot_id}: {e_parse}. Row: {row}"
                     )
                     continue
         except StopIteration:
-            logging.warning(
+            logger.warning(
                 f"AlphaMissense file for {uniprot_id} seems empty or has no data rows after header."
             )
             return []
         except Exception as e:
-            logging.error(f"Error parsing AlphaMissense csv for {uniprot_id}: {e}")
+            logger.error(f"Error parsing AlphaMissense csv for {uniprot_id}: {e}")
             return []
 
-        logging.info(
+        logger.info(
             f"Successfully parsed {len(am_scores)} AlphaMissense scores for {uniprot_id}"
         )
         return am_scores
@@ -337,13 +334,13 @@ class AFDBClient:
         Fetches and processes various types of AlphaFold data for a UniProt ID.
         """
         results: Dict[str, Any] = {}
-        logging.info(
+        logger.info(
             f"Fetching AlphaFold data for {uniprot_id}, requested types: {requested_data_types}"
         )
 
         entry_details = self.get_alphafold_entry_details(uniprot_id)
         if not entry_details:
-            logging.warning(
+            logger.warning(
                 f"Could not get AlphaFold entry details for {uniprot_id}. Cannot fetch further data."
             )
             for req_type in requested_data_types:
@@ -354,7 +351,7 @@ class AFDBClient:
             cif_url = entry_details.get("cifUrl")
             if cif_url:
                 try:
-                    logging.info(f"Fetching CIF file for pLDDT: {cif_url}")
+                    logger.info(f"Fetching CIF file for pLDDT: {cif_url}")
                     cif_content = self._fetch_file_content(cif_url)
                     if cif_content:
                         results["plddt"] = self._parse_plddt_from_cif_content(
@@ -363,10 +360,10 @@ class AFDBClient:
                     else:
                         results["plddt"] = []
                 except Exception as e:
-                    logging.error(f"Failed to get pLDDT data for {uniprot_id}: {e}")
+                    logger.error(f"Failed to get pLDDT data for {uniprot_id}: {e}")
                     results["plddt"] = []
             else:
-                logging.warning(
+                logger.warning(
                     f"No cifUrl found for {uniprot_id}, cannot fetch pLDDT."
                 )
                 results["plddt"] = []
@@ -376,7 +373,7 @@ class AFDBClient:
             tax_id = entry_details.get("taxId")
             if am_url:
                 try:
-                    logging.info(f"Fetching AlphaMissense file from: {am_url}")
+                    logger.info(f"Fetching AlphaMissense file from: {am_url}")
                     am_content = self._fetch_file_content(am_url)
                     if am_content:
                         results["alphamissense"] = (
@@ -387,17 +384,17 @@ class AFDBClient:
                     else:
                         results["alphamissense"] = []
                 except Exception as e:
-                    logging.error(
+                    logger.error(
                         f"Failed to get AlphaMissense data for {uniprot_id}: {e}"
                     )
                     results["alphamissense"] = []
             else:
                 if tax_id == 9606:
-                    logging.warning(
+                    logger.warning(
                         f"No amAnnotationsUrl found for human entry {uniprot_id}."
                     )
                 else:
-                    logging.info(
+                    logger.info(
                         f"No amAnnotationsUrl found for non-human entry {uniprot_id} (taxId: {tax_id})."
                     )
                 results["alphamissense"] = []

@@ -17,6 +17,9 @@ def plot_protein_tracks(
     title_fontsize: int = 12,
     xlabel_fontsize: int = 10,
     save_option: bool = False,
+    save_path: Optional[str] = None,
+    show: bool = True,
+    dpi: int = 300,
     figure_height_multiplier: float = 3,
 ):
     """
@@ -33,7 +36,10 @@ def plot_protein_tracks(
         view_end_aa: Optional end amino acid for zoomed view. Defaults to sequence_length.
         title_fontsize: Font size for the plot title.
         xlabel_fontsize: Font size for the x-axis label.
-        save_option: If True, saves the plot to a file instead of showing.
+        save_option: If True, saves the plot to "<protein_id>_plot.png".
+        save_path: Exact path to write the image to. Takes precedence over save_option.
+        show: If True, opens the plot in a window. Set False for scripts and the CLI.
+        dpi: Resolution of the saved image.
         figure_height_multiplier: Multiplier for total track units to determine figure height,
                                   used only if figure_height is not specified.
     """
@@ -126,10 +132,12 @@ def plot_protein_tracks(
 
     plt.tight_layout(pad=0.8)
 
-    if save_option:
-        filename = f"{protein_id.replace('/', '_')}_plot.png"
-        plt.savefig(filename, dpi=300)
+    if save_path or save_option:
+        filename = save_path or f"{protein_id.replace('/', '_')}_plot.png"
+        plt.savefig(filename, dpi=dpi)
         print(f"Plot saved as {filename}")
-        # plt.close(fig) # Optional: close figure after saving if running in a script
 
-    plt.show()
+    if show:
+        plt.show()
+    else:
+        plt.close(fig)

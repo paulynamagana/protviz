@@ -7,10 +7,7 @@ import platformdirs
 import requests
 import requests_cache
 
-# Set up logging
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-)
+logger = logging.getLogger(__name__)
 
 
 class TEDClient:
@@ -50,7 +47,7 @@ class TEDClient:
 
         # construct the full cache file path
         cache_file_path = os.path.join(user_cache_path, f"{cache_name}.sqlite")
-        logging.info(f"Using cache file at: {cache_file_path}")
+        logger.info(f"Using cache file at: {cache_file_path}")
 
         self.session = requests_cache.CachedSession(
             cache_file_path, backend="sqlite", expire_after=expire_after
@@ -74,9 +71,9 @@ class TEDClient:
             response = self.session.get(url, timeout=self.timeout)
 
             if getattr(response, "from_cache", False):
-                logging.info(f"Using cached response for {url}")
+                logger.info(f"Using cached response for {url}")
             else:
-                logging.info(f"Making API request to {url}")
+                logger.info(f"Making API request to {url}")
 
             response.raise_for_status()
 
@@ -87,14 +84,14 @@ class TEDClient:
             return data
 
         except requests.exceptions.HTTPError as e:
-            logging.error(
+            logger.error(
                 f"TED API request failed for {uniprot_id} with status code {response.status_code}: {e}"
             )
             raise
 
         except requests.exceptions.JSONDecodeError:
             cached = " (cached)" if getattr(response, "from_cache", False) else ""
-            logging.error(
+            logger.error(
                 f"TED API response for {url} is not valid JSON{cached}. Response content: {response.text[:200]}..."
             )
             raise ValueError(
@@ -102,7 +99,7 @@ class TEDClient:
             )
 
         except requests.exceptions.RequestException as e:
-            logging.error(f"TED API request failed for {uniprot_id}: {e}")
+            logger.error(f"TED API request failed for {uniprot_id}: {e}")
             raise
 
     def get_TED_annotations(self, uniprot_id: str) -> List[Dict[str, Any]]:
@@ -119,19 +116,19 @@ class TEDClient:
         try:
             data = self._make_request(endpoint, uniprot_id)
         except (requests.exceptions.RequestException, ValueError) as e:
-            logging.error(f"Error retrieving TED annotations for {uniprot_id}: {e}")
+            logger.error(f"Error retrieving TED annotations for {uniprot_id}: {e}")
             return []
 
         if not data or "data" not in data:  # Check if the main 'data' key exists
             # Or simply rely on data.get('data', []) and subsequent checks
-            logging.error(
+            logger.error(
                 f"No 'data' field in API response for {uniprot_id} or response is empty."
             )
             return []
 
         annotations_raw = data.get("data", [])
         if not isinstance(annotations_raw, list):
-            logging.error(f"Unexpected data format for {uniprot_id}: {annotations_raw}")
+            logger.error(f"Unexpected data format for {uniprot_id}: {annotations_raw}")
             return []
 
         processed_annotations = []
@@ -149,9 +146,9 @@ class TEDClient:
                     }
                 )
         if not processed_annotations:
-            logging.info(f"No valid annotations found for {uniprot_id}")
+            logger.info(f"No valid annotations found for {uniprot_id}")
             return []
-        logging.info(f"TED annotations for {uniprot_id}: {processed_annotations}")
+        logger.info(f"TED annotations for {uniprot_id}: {processed_annotations}")
         return processed_annotations
 
 
