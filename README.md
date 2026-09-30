@@ -1,99 +1,146 @@
 # Protviz: Protein Annotation Visualiser
+
 ![Python Support](https://img.shields.io/badge/Python-3.9%20%7C3.10%20%7C%203.11%20%7C%203.12-blue)
 ![Python3](https://img.shields.io/badge/Language-Python3-steelblue)
 ![License](https://img.shields.io/badge/License-MIT-steelblue)
 [![Python Tests](https://github.com/paulynamagana/protviz/actions/workflows/python-tests.yml/badge.svg?branch=main)](https://github.com/paulynamagana/protviz/actions/workflows/python-tests.yml)
 
-Protviz is a Python package designed to retrieve and visualise various protein annotations and structural information. It allows users to fetch data from multiple bioinformatics databases and plot this information along a protein sequence using a flexible track-based system.
+Protviz retrieves protein annotations from public bioinformatics resources and draws them
+as aligned tracks along a protein sequence. It provides both a command-line tool for
+producing a figure in a single step and a Python API for composing tracks directly.
+
+The `protviz` command covers most needs; the Python API and the scripts in `examples/` are
+there for custom or programmatic use.
+
+![Example output for P04637](docs/example.png)
+
+*Every track Protviz can draw, for human p53 (UniProt P04637), produced by
+`protviz P04637 --tracks all`.*
 
 ## Motivation
 
-The goal of Protviz is to simplify the process of plotting protein annotations. This package is inspired by the [Gviz](https://bioconductor.org/packages/release/bioc/html/Gviz.html) library in R/Bioconductor, aiming to provide a similar, easy-to-use, track-based visualisation system for protein sequence data in Python.
+Assembling a single view of what is known about a protein normally means querying several
+resources in turn, reconciling their coordinate conventions, and writing bespoke plotting
+code. Protviz consolidates that work behind one interface.
 
-I also wanted a way to plot data from resources but also be able to add custom annotations. Hope its helpful.
-
-
-
-## Features
-
-* **Data Retrieval**:
-    * Fetch protein sequence length from UniProt.
-    * Retrieve PDB coverage and ligand interaction data from PDBe.
-    * Get TED domain annotations from the TED database.
-    * Fetch pLDDT scores and AlphaMissense data from the AlphaFold Database (AFDB).
-
-* **Track-Based Visualisation**:
-    * **AxisTrack**: Displays the sequence axis with tick marks.
-    * **PDBTrack**: Shows PDB structure coverage, with options to display as individual entries or a collapsed overview.
-    * **LigandInteractionTrack**: Visualises ligand binding sites on the protein from PDB.
-    * **TEDDomainsTrack**: Displays TED  annotations.
-    * **AlphaFoldTrack**: Shows AlphaFold prediction metrics like pLDDT and average AlphaMissense pathogenicity scores.
-    * **CustomTrack**: Allows plotting of arbitrary user-defined annotations (ranges or points) with customisable labels and colors.
-    * **InterProTrack**: Displays InterPro annotations, like Pfam and CATH.
-
-
-* **Core Plotting Functionality**:
-    * Combines multiple tracks into a single, coherent plot.
-    * Supports zooming into specific regions of the protein sequence.
-    * Option to save plots to a file.
-
+The design follows [Gviz](https://bioconductor.org/packages/release/bioc/html/Gviz.html)
+from R/Bioconductor: each annotation type is a *track*, tracks share a common coordinate
+system, and a figure is simply an ordered list of them. Alongside the built-in tracks for
+public databases, `CustomTrack` accepts arbitrary user-supplied annotations, so unpublished
+or in-house data can be displayed against the same sequence axis as reference data.
 
 ## Installation
 
-You need Python 3.9 or newer. To install Protviz, open a terminal and run:
+Protviz requires Python 3.9 or newer.
 
 ```bash
 pip install git+https://github.com/paulynamagana/protviz.git
 ```
 
-## Quick start (no Python required)
+For a development install, clone the repository and install in editable mode:
 
-Protviz comes with a `protviz` command, so you can make a figure without writing any code.
-Give it a UniProt accession and it will fetch everything it can find and save a picture:
+```bash
+git clone https://github.com/paulynamagana/protviz.git
+cd protviz
+pip install -e ".[dev]"
+```
+
+## Command-line usage
+
+Installing the package provides a `protviz` command. Supplying a UniProt accession
+retrieves the default annotation set and writes a figure:
 
 ```bash
 protviz P04637
 ```
 
-That saves `P04637.png` in the folder you are in. A UniProt accession looks like `P04637`
-or `Q9Y6K9` — it is not a gene name, so `TP53` will not work. You can find the accession
-for your protein by searching its name at [uniprot.org](https://www.uniprot.org) and
-copying the short code in the **Entry** column.
+This saves `P04637.png` to the current directory.
 
-Some other things you can do:
+Protviz identifies proteins by UniProt accession — for example `P04637` or `Q9Y6K9`. Gene
+names such as `TP53` are not accepted. The accession for a given protein appears in the
+**Entry** column of a search at [uniprot.org](https://www.uniprot.org).
+
+### Common operations
 
 ```bash
-protviz P04637 -o my_figure.png        # choose the file name
-protviz P04637 --region 90-300         # zoom into amino acids 90 to 300
-protviz P04637 --tracks pdb,pfam       # draw only the tracks you want
-protviz P04637 --detail                # give every entry its own row
-protviz P04637 --show                  # open a window instead of saving
-protviz --list-tracks                  # see every track and what it shows
-protviz --help                         # see all the options
+protviz P04637 -o figure.png         # set the output path
+protviz P04637 --region 90-300       # restrict the view to residues 90-300
+protviz P04637 --tracks pdb,pfam     # select specific tracks
+protviz P04637 --tracks all          # include every available track
+protviz P04637 --detail              # one row per entry instead of a merged summary
+protviz P04637 --show                # display in a window rather than writing a file
+protviz --list-tracks                # describe the available tracks
+protviz --help                       # full option reference
 ```
 
-If a database is unavailable or has nothing for your protein, Protviz says so and carries
-on with the tracks it could fetch, rather than failing.
+### Options
+
+| Option | Effect |
+| --- | --- |
+| `-o`, `--out FILE` | Output path. Defaults to `<ACCESSION>.png`. |
+| `-t`, `--tracks NAME…` | Tracks to draw, comma- or space-separated. Accepts `all`. |
+| `-r`, `--region START-END` | Restrict the view to a residue range. |
+| `--detail` | Give each entry its own row rather than merging overlapping entries. |
+| `--show` | Open an interactive window instead of writing a file. |
+| `--width INCHES` | Figure width. Default `12`. |
+| `--dpi N` | Output resolution. Default `300`. |
+| `--list-tracks` | Print the available tracks and exit. |
+| `-v`, `--verbose` | Emit detailed progress and diagnostic logging. |
 
 ### Available tracks
 
-| Track | Shows |
-| --- | --- |
-| `pdb` | Experimental structures from the PDB, as sequence coverage |
-| `ligands` | Positions where a ligand binds the protein |
-| `ted` | Structural domains predicted by TED |
-| `pfam` | Protein families and domains from Pfam |
-| `cath` | Structural domains from CATH-Gene3D |
-| `plddt` | AlphaFold per-residue confidence |
-| `alphamissense` | AlphaMissense average pathogenicity (slow — downloads a large file) |
+| Track | Source | Shows |
+| --- | --- | --- |
+| `pdb` | PDBe | Experimental structure coverage across the sequence |
+| `ligands` | PDBe | Residues involved in ligand binding |
+| `ted` | TED | Predicted structural domains |
+| `pfam` | InterPro | Protein families and domains |
+| `cath` | InterPro | CATH-Gene3D structural domains |
+| `plddt` | AlphaFold DB | Per-residue prediction confidence |
+| `alphamissense` | AlphaFold DB | Mean pathogenicity per residue (downloads a large file) |
 
-`pdb`, `ligands`, `ted`, `pfam` and `plddt` are drawn by default. Use `--tracks all` to
-include every one.
+`pdb`, `ligands`, `ted`, `pfam` and `plddt` are drawn by default. `alphamissense` is
+excluded from the default set because retrieving it is substantially slower.
 
-## Using Protviz from Python
+## How it works
 
-The command line covers the common cases. Use the Python API when you want full control
-over each track, or to add your own annotations with `CustomTrack`:
+Protviz separates data retrieval from rendering, in three stages.
+
+**1. Retrieval.** Each resource has a client in `protviz.data_retrieval` — `PDBeClient`,
+`TEDClient`, `InterProClient`, `AFDBClient`, plus `get_protein_sequence_length` for
+UniProt. Clients handle the HTTP request, pagination and response parsing, and return
+plain lists of dictionaries. They perform no plotting.
+
+**2. Track construction.** Each track class in `protviz.tracks` accepts the output of a
+client and is responsible for laying itself out: resolving overlapping features into rows,
+merging segments when collapsed, assigning colours and computing its own height. Tracks
+share the `BaseTrack` interface (`draw()` and `get_total_height()`), so the plotter treats
+them uniformly and new track types need no changes elsewhere.
+
+Most tracks support two modes via `plotting_option`. In `"collapse"` all features are
+merged into a single summarising row, which is appropriate for well-studied proteins with
+hundreds of overlapping PDB entries. In `"full"` each entry occupies its own row with
+labels. The command line exposes this as `--detail`.
+
+**3. Rendering.** `plot_protein_tracks` allocates vertical space according to each track's
+reported height, stacks the tracks over a shared residue axis, and applies any zoom region.
+Because tracks resolve their layout against the visible range rather than the full
+sequence, a zoomed figure re-flows rather than simply cropping.
+
+**Caching.** Every client stores responses in a SQLite cache under the platform user-cache
+directory, expiring after 24 hours. Repeated runs on the same protein are served locally,
+which matters when iterating on a figure. Both `cache_name` and `expire_after` are
+constructor arguments, and `PDBeClient.clear_cache()` discards stored responses.
+
+**Partial failure.** The command line treats each track independently: a resource that is
+unavailable, or that holds no annotation for the protein, produces a note on stderr and is
+omitted, while the remaining tracks are still drawn. A figure is only refused when no track
+returned data.
+
+## Python API
+
+The command line covers common cases. The Python API gives control over individual track
+parameters and is the route for combining reference data with your own annotations.
 
 ```python
 from protviz import plot_protein_tracks
@@ -102,19 +149,16 @@ from protviz.tracks import AxisTrack, PDBTrack, AlphaFoldTrack
 
 uniprot_id = "O15245"
 
-# Fetch the data you want
 seq_length = get_protein_sequence_length(uniprot_id)
 pdb_coverage = PDBeClient().get_pdb_coverage(uniprot_id)
 alphafold_data = AFDBClient().get_alphafold_data(uniprot_id, requested_data_types=["plddt"])
 
-# Build one track per kind of annotation
 tracks = [
     AxisTrack(sequence_length=seq_length, label="Sequence"),
     PDBTrack(pdb_data=pdb_coverage, label="PDB", plotting_option="collapse"),
     AlphaFoldTrack(afdb_data=alphafold_data, plotting_options=["plddt"]),
 ]
 
-# Draw them
 plot_protein_tracks(
     protein_id=uniprot_id,
     sequence_length=seq_length,
@@ -125,23 +169,72 @@ plot_protein_tracks(
 )
 ```
 
-`plot_protein_tracks` takes `save_path` to choose the output file and `show` to control
-whether a window opens. Use `view_start_aa` and `view_end_aa` to zoom into a region.
+Tracks are drawn top to bottom in list order. `plot_protein_tracks` accepts `save_path` to
+set the output file, `show` to control whether a window opens, and `view_start_aa` /
+`view_end_aa` to restrict the view to a region.
 
-## Dependencies
+### Track classes
 
-These are installed automatically with the package:
+| Class | Constructed from |
+| --- | --- |
+| `AxisTrack` | Sequence length; draws the residue axis and tick marks |
+| `PDBTrack` | `PDBeClient.get_pdb_coverage()` |
+| `LigandInteractionTrack` | `PDBeClient.get_pdb_ligand_interactions()` |
+| `TEDDomainsTrack` | `TEDClient.get_TED_annotations()` |
+| `InterProTrack` | `InterProClient.get_pfam_annotations()` or `.get_cathgene3d_annotations()` |
+| `AlphaFoldTrack` | `AFDBClient.get_alphafold_data()` |
+| `CustomTrack` | Your own annotation dictionaries |
 
-* numpy>=1.20
-* matplotlib>=3.4
-* requests>=2.32
-* gemmi (for parsing CIF files from AlphaFold DB)
-* requests-cache and platformdirs (for caching API responses between runs)
+### Custom annotations
 
-## Running Examples
+`CustomTrack` takes a list of dictionaries. Each needs either `start` and `end` for a
+range, or `position` for a single residue; `label` and `color` are optional.
 
-The `examples/` folder contains scripts showing each data source in turn. Run one with:
+```python
+from protviz.tracks import CustomTrack
+
+annotations = [
+    {"position": 175, "label": "R175H", "color": "firebrick"},
+    {"position": 248, "label": "R248Q", "color": "firebrick"},
+    {"start": 102, "end": 292, "label": "DNA-binding domain", "color": "steelblue"},
+]
+
+custom_track = CustomTrack(annotation_data=annotations, label="Annotations")
+```
+
+Point annotations are drawn as markers and ranges as bars, each on its own lane. Adding the
+resulting track to the list passed to `plot_protein_tracks` places your annotations on the
+same axis as the database-derived tracks.
+
+## Examples
+
+The `examples/` directory contains a script per data source:
 
 ```bash
 python examples/example_afdb.py
 ```
+
+## Dependencies
+
+Installed automatically with the package:
+
+| Package | Purpose |
+| --- | --- |
+| `numpy` | Numerical operations |
+| `matplotlib` | Rendering |
+| `requests` | HTTP requests |
+| `gemmi` | Parsing CIF files from the AlphaFold Database |
+| `requests-cache`, `platformdirs` | Response caching between runs |
+
+## Development
+
+```bash
+pytest
+ruff check src/ tests/
+```
+
+The repository uses `pre-commit`; install the hooks with `pre-commit install`.
+
+## Licence
+
+MIT. See [LICENSE](LICENSE).
