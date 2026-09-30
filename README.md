@@ -6,8 +6,8 @@
 [![Python Tests](https://github.com/paulynamagana/protviz/actions/workflows/python-tests.yml/badge.svg?branch=main)](https://github.com/paulynamagana/protviz/actions/workflows/python-tests.yml)
 
 Protviz retrieves protein annotations from public bioinformatics resources and draws them
-as aligned tracks along a protein sequence. It provides both a command-line tool for
-producing a figure in a single step and a Python API for composing tracks directly.
+as aligned tracks along a protein sequence. It can be used from the command line, from a
+browser-based interface, or directly from Python.
 
 The `protviz` command covers most needs; the Python API and the scripts in `examples/` are
 there for custom or programmatic use.
@@ -101,6 +101,17 @@ protviz --help                       # full option reference
 
 `pdb`, `ligands`, `ted`, `pfam` and `plddt` are drawn by default. `alphamissense` is
 excluded from the default set because retrieving it is substantially slower.
+
+## Web app
+
+A Streamlit interface provides the same functionality in the browser: enter a UniProt
+accession, select tracks, adjust the region, add your own annotations and download the
+figure as a PNG.
+
+```bash
+pip install -r requirements.txt
+streamlit run streamlit_app.py
+```
 
 ## How it works
 

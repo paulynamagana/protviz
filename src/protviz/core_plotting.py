@@ -42,6 +42,9 @@ def plot_protein_tracks(
         dpi: Resolution of the saved image.
         figure_height_multiplier: Multiplier for total track units to determine figure height,
                                   used only if figure_height is not specified.
+
+    Returns:
+        The matplotlib Figure, or None if no tracks were provided.
     """
     if not tracks:
         print("No tracks provided to plot.")
@@ -141,3 +144,5 @@ def plot_protein_tracks(
         plt.show()
     else:
         plt.close(fig)
+
+    return fig
