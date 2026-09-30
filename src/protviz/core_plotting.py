@@ -36,6 +36,9 @@ def plot_protein_tracks(
         save_option: If True, saves the plot to a file instead of showing.
         figure_height_multiplier: Multiplier for total track units to determine figure height,
                                   used only if figure_height is not specified.
+
+    Returns:
+        The matplotlib Figure, or None if no tracks were provided.
     """
     if not tracks:
         print("No tracks provided to plot.")
@@ -133,3 +136,4 @@ def plot_protein_tracks(
         # plt.close(fig) # Optional: close figure after saving if running in a script
 
     plt.show()
+    return fig

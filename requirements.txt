@@ -1,0 +1,4 @@
+# Used by Streamlit Community Cloud to run streamlit_app.py.
+# "." installs protviz itself (and its dependencies) from this repo.
+.
+streamlit>=1.50

@@ -38,6 +38,18 @@ I also wanted a way to plot data from resources but also be able to add custom a
     * Option to save plots to a file.
 
 
+## Web App
+
+No coding needed: enter a UniProt ID, pick the tracks you want, zoom, add your own annotations and download the plot as a PNG.
+
+To run the web app on your own computer:
+
+```bash
+pip install -r requirements.txt
+streamlit run streamlit_app.py
+```
+
+
 ## Dependencies
 
 The package requires the following Python libraries:
